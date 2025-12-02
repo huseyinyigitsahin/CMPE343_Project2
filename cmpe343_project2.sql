@@ -6,6 +6,8 @@
 -- Üretim Zamanı: 02 Ara 2025, 17:51:11
 -- Sunucu sürümü: 10.4.32-MariaDB
 -- PHP Sürümü: 8.2.12
+CREATE DATABASE IF NOT EXISTS `cmpe343_project2`;
+USE `cmpe343_project2`;
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
