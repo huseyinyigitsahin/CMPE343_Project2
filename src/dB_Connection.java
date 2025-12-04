@@ -2,13 +2,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-
 public class dB_Connection {
 
-    private final String userName = "myuser@localhost";
+    private final String userName = "myuser";
     private final String password = "1234";
     private final String dbName = "cmpe343_project2";
     private final String host = "localhost";
