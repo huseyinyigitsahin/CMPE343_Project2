@@ -99,8 +99,12 @@ public class AppMain {
                             attempts = 0;
                         } 
                         else if ("Senior Developer".equalsIgnoreCase(role)) {
-                            System.out.println(">> Senior Developer menu is under construction.");
-                        }
+                            SeniorDevMenu seniorMenu = new SeniorDevMenu(username, fullName, role);
+                            seniorMenu.showMenu();
+
+                            System.out.println("Logged out successfully.");
+                            attempts = 0;
+                        } 
                         else if ("Manager".equalsIgnoreCase(role)) {
                             System.out.println(">> Manager menu is under construction.");
                         }

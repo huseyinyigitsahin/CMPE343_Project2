@@ -8,10 +8,10 @@ import java.security.NoSuchAlgorithmException;
 
 public class TesterMenu {
 
-    private final String username;
-    private final String fullName; 
-    private final String role;
-    private final Scanner scanner;
+    protected final String username;
+    protected final String fullName;
+    protected final String role;
+    protected final Scanner scanner;
 
     public TesterMenu(String username, String fullName, String role) {
         this.username = username;
@@ -20,7 +20,7 @@ public class TesterMenu {
         this.scanner = new Scanner(System.in);
     }
 
-    // Ana menü
+    // ==================== MAIN MENU =====================
     public void showMenu() {
         while (true) {
             System.out.println();
@@ -119,7 +119,7 @@ public class TesterMenu {
     }
 
     // 🔐 Change password: eski şifreyi doğrula, yeni şifreyi strength + onay ile al, DB'de güncelle
-    private void handleChangePassword() {
+    protected void handleChangePassword() {
         System.out.println();
         System.out.println("=== CHANGE PASSWORD ===");
         System.out.println("If you know your current password, you can change it here.");
@@ -287,18 +287,113 @@ public class TesterMenu {
         }
     }
 
-    // Placeholder – sonra dolduracağız
-    private void handleListContacts() {
-        System.out.println("[TODO] List contacts feature will be implemented here.");
+    // ==================== LIST CONTACTS ======================
+    protected void handleListContacts() {
+        System.out.println("\n=== ALL CONTACTS ===");
+
+        dB_Connection db = new dB_Connection();
+        Connection con = db.connect();
+        if (con == null) {
+            System.out.println("DB Error.");
+            return;
+        }
+
+        String sql = "SELECT * FROM contacts ORDER BY contact_id ASC";
+
+        try (PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            System.out.printf("%-5s %-12s %-12s %-12s %-12s %-12s %-12s %-25s %-25s\n",
+                    "ID","First","Middle","Last","Nick","Phone1","Phone2","Email","LinkedIn");
+            System.out.println("--------------------------------------------------------------------------------------------------");
+
+            while (rs.next()) {
+                System.out.printf("%-5d %-12s %-12s %-12s %-12s %-12s %-12s %-25s %-25s\n",
+                        rs.getInt("contact_id"),
+                        rs.getString("first_name"),
+                        rs.getString("middle_name"),
+                        rs.getString("last_name"),
+                        rs.getString("nickname"),
+                        rs.getString("phone_primary"),
+                        rs.getString("phone_secondary"),
+                        rs.getString("email"),
+                        rs.getString("linkedin_url"));
+            }
+
+        } catch (Exception e) {
+            System.out.println("List error: " + e.getMessage());
+        }
     }
 
-    private void handleSearchContacts() {
-        System.out.println("[TODO] Search contacts feature will be implemented here.");
+    // ==================== SEARCH CONTACTS ======================
+    protected void handleSearchContacts() {
+        System.out.println("\n=== SEARCH CONTACTS ===");
+        System.out.print("Keyword: ");
+        String k = scanner.nextLine().trim();
+
+        dB_Connection db = new dB_Connection();
+        Connection con = db.connect();
+
+        String sql = "SELECT * FROM contacts WHERE first_name LIKE ? OR last_name LIKE ? OR nickname LIKE ?";
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            String like = "%" + k + "%";
+            ps.setString(1, like);
+            ps.setString(2, like);
+            ps.setString(3, like);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                System.out.printf("%d - %s %s (%s)\n",
+                        rs.getInt("contact_id"),
+                        rs.getString("first_name"),
+                        rs.getString("last_name"),
+                        rs.getString("nickname"));
+            }
+
+        } catch (Exception e) {
+            System.out.println("Search error: " + e.getMessage());
+        }
     }
 
-    private void handleSortContacts() {
-        System.out.println("[TODO] Sort contacts feature will be implemented here.");
-    }
+    // ==================== SORT CONTACTS ======================
+    protected void handleSortContacts() {
+        System.out.println("\n=== SORT CONTACTS ===");
+        System.out.println("1. First Name A→Z");
+        System.out.println("2. Last Name A→Z");
+        System.out.println("3. Birth Date (Oldest→Newest)");
+        System.out.print("Choice: ");
 
-   
+        String c = scanner.nextLine().trim();
+        String order;
+
+        switch (c) {
+            case "1": order = "first_name ASC"; break;
+            case "2": order = "last_name ASC"; break;
+            case "3": order = "birth_date ASC"; break;
+            default:
+                System.out.println("Invalid option.");
+                return;
+        }
+
+        dB_Connection db = new dB_Connection();
+        Connection con = db.connect();
+
+        try (PreparedStatement ps = con.prepareStatement(
+                "SELECT * FROM contacts ORDER BY " + order);
+             ResultSet rs = ps.executeQuery()) {
+
+            System.out.println("Sorted Results:");
+            while (rs.next()) {
+                System.out.printf("%d - %s %s\n",
+                        rs.getInt("contact_id"),
+                        rs.getString("first_name"),
+                        rs.getString("last_name"));
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Sort Error: " + e.getMessage());
+        }
+    }
 }
