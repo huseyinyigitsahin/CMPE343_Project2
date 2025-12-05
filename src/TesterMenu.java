@@ -6,9 +6,9 @@ import java.sql.SQLException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.ResolverStyle;
+import java.time.format.DateTimeParseException;
 
 public class TesterMenu {
 
@@ -112,8 +112,9 @@ public class TesterMenu {
     }
 
     protected void clearScreen() {
-        System.out.print("\u001B[H\u001B[2J");
-        System.out.flush();
+        for (int i = 0; i < 50; i++) {
+            System.out.println();
+        }
     }
 
     protected static String trimOrEmpty(String s) {
@@ -275,24 +276,22 @@ public class TesterMenu {
                 || domain.equals("yahoo.com");
     }
 
+    // GÜNCELLENDİ: LocalDate ile gerçek tarih + gelecekte olamaz
     protected boolean isValidExactDate(String date) {
         date = trimOrEmpty(date);
         if (!date.matches("\\d{4}-\\d{2}-\\d{2}")) {
             return false;
         }
-        
         try {
-            java.time.format.DateTimeFormatter formatter = 
-                java.time.format.DateTimeFormatter.ofPattern("uuuu-MM-dd")
-                .withResolverStyle(java.time.format.ResolverStyle.STRICT);
-            
-            java.time.LocalDate parsedDate = java.time.LocalDate.parse(date, formatter);
-
-            int year = parsedDate.getYear();
-            if (year < 1900 || year > 2100) return false;
-            
+            LocalDate parsed = LocalDate.parse(date);
+            LocalDate today = LocalDate.now();
+            // doğum günü gelecekte olamaz
+            if (parsed.isAfter(today)) {
+                return false;
+            }
             return true;
-        } catch (Exception e) {
+        } catch (DateTimeParseException e) {
+            // 2023-02-30 gibi hatalı tarihleri yakalar
             return false;
         }
     }
@@ -718,7 +717,7 @@ public class TesterMenu {
 
         String opChoice = readTrimmed().toLowerCase();
 
-        if ("0".equals(opChoice) || "b".equals(opChoice) || "back".equals(opChoice)) {
+        if ("0".equals(opChoice)) {
             return "back";
         } else if ("1".equals(opChoice)) {
             return "starts";
@@ -843,14 +842,14 @@ public class TesterMenu {
 
                 System.out.println();
                 System.out.println(YELLOW + "Maximum length for search text is " + MAX_SEARCH_LEN + " characters." + RESET);
-                System.out.println(YELLOW + "You can type B to go back." + RESET);
+                System.out.println(YELLOW + "You can type 0 to go back." + RESET);
                 System.out.println();
 
                 String opLabel = getOperatorLabel(op);
                 System.out.print("Enter search text for " + fieldLabel + " (" + CYAN + opLabel + RESET + "): ");
                 String keyword = readTrimmed();
 
-                if (keyword.equalsIgnoreCase("b")) {
+                if (keyword.equals("0")) {
                     stayOnSameField = false;
                     break;
                 }
@@ -1200,18 +1199,11 @@ public class TesterMenu {
 
             int count = 0;
 
+            // BURADA: Artık "Do you want to add a condition" yok,
+            // direkt condition 1 ve 2 istenir.
             while (count < 2) {
                 System.out.println();
                 System.out.println(CYAN + "Selected filters so far: " + count + RESET);
-                System.out.print(YELLOW + "Do you want to add a condition (y or n): " + RESET);
-                String ans = readTrimmed().toLowerCase();
-
-                if (ans.equals("n") || ans.equals("no")) {
-                    break;
-                } else if (!ans.equals("y") && !ans.equals("yes")) {
-                    System.out.println(YELLOW + "Please answer with y or n." + RESET);
-                    continue;
-                }
 
                 System.out.println();
                 System.out.println(CYAN + "Select field for condition " + (count + 1) + ":" + RESET);
@@ -1221,8 +1213,14 @@ public class TesterMenu {
                 System.out.println(GREEN + "4)" + RESET + " Email");
                 System.out.println(GREEN + "5)" + RESET + " Nickname");
                 System.out.println(GREEN + "6)" + RESET + " Birth Date");
-                System.out.print(YELLOW + "Your choice (1-6): " + RESET);
+                System.out.print(YELLOW + "Your choice (1-6, 0 to cancel): " + RESET);
                 String fieldOption = readTrimmed();
+
+                if (fieldOption.equals("0")) {
+                    System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
+                    waitForEnter();
+                    break;
+                }
 
                 String columnName;
                 String label;
@@ -1275,7 +1273,7 @@ public class TesterMenu {
                         System.out.print("Enter exact birth date YYYY-MM-DD: ");
                         value1 = readTrimmed();
                         if (!isValidExactDate(value1)) {
-                            System.out.println(RED + "Invalid date format. Example: 1995-04-23." + RESET);
+                            System.out.println(RED + "Invalid date format or future date. Example: 1995-04-23." + RESET);
                             continue;
                         }
                     } else if ("2".equals(dateMode)) {
@@ -1291,13 +1289,20 @@ public class TesterMenu {
                             continue;
                         }
                         op = "month";
-                        value1 = monthInput;
+                        value1 = String.valueOf(monthNum);
                     } else if ("3".equals(dateMode)) {
                         op = "year";
                         System.out.print("Enter year for example 1999: ");
                         value1 = readTrimmed();
                         if (!value1.matches("\\d{4}")) {
                             System.out.println(RED + "Year must be four digits like 1999. Condition ignored." + RESET);
+                            continue;
+                        }
+                        // gelecekteki yıl olmasın
+                        int yearInt = Integer.parseInt(value1);
+                        int currentYear = LocalDate.now().getYear();
+                        if (yearInt > currentYear || yearInt < 1900) {
+                            System.out.println(RED + "Year must be between 1900 and " + currentYear + "." + RESET);
                             continue;
                         }
                     } else {
@@ -1421,7 +1426,7 @@ public class TesterMenu {
                     if ("date_eq".equals(op)) {
                         stmt.setString(paramIndex++, val1[i]);
                     } else if ("month".equals(op)) {
-                        int monthNum = parseMonthToInt(val1[i]);
+                        int monthNum = Integer.parseInt(val1[i]);
                         stmt.setInt(paramIndex++, monthNum);
                     } else if ("year".equals(op)) {
                         stmt.setInt(paramIndex++, Integer.parseInt(val1[i]));
