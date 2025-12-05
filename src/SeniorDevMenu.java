@@ -486,43 +486,59 @@ public class SeniorDevMenu extends JuniorDevMenu {
                         break;
                     }
 
-                    // ================== STEP 7: LINKEDIN (optional) ==================
+                    // ================== STEP 7: LINKEDIN USERNAME (OPTIONAL) ==================
                     case 7: {
                         System.out.println();
-                        System.out.println(CYAN + "LinkedIn URL (optional)" + RESET);
-                        System.out.println(YELLOW + "Example:" + RESET + " https://www.linkedin.com/in/username");
-                        System.out.print("LinkedIn URL (b = back, q = cancel): ");
+                        System.out.println(CYAN + "LinkedIn (optional)" + RESET);
+                        System.out.println(YELLOW + "Enter ONLY the username, NOT the full URL." + RESET);
+                        System.out.println(YELLOW + "Example username:" + RESET + " ahmet, ali-demir, example.user");
+                        System.out.println(YELLOW + "Saved as:" + RESET + " linkedin.com/in/" + GREEN + "<username>" + RESET);
+                        System.out.print("LinkedIn username (ENTER = skip, b = back, q = cancel): ");
+
                         String tmp = readLimitedLine();
                         if (tmp == null) {
                             System.out.println(RED + "Input is too long. Maximum " + MAX_FIELD_LEN + " characters." + RESET);
                             break;
                         }
+
                         if (isCancelKeyword(tmp)) {
                             System.out.println(YELLOW + "Add contact cancelled." + RESET);
                             waitForEnter();
                             return;
                         }
+
                         if (isBackCommand(tmp)) {
                             step--;   // email'e dön
                             break;
                         }
 
+                        tmp = trimOrEmpty(tmp);
+
+                        // Kullanıcı boş bıraktı — optional
                         if (tmp.isEmpty()) {
-                            phone2 = "";
+                            linkedin = "";
                             step++;
                             break;
                         }
 
-                        linkedin = tmp;
-                        if (linkedin.length() < 5) {
-                            System.out.println(RED + "LinkedIn URL is too short." + RESET);
+                        // Kullanıcı yanlışlıkla URL yazdıysa engelle
+                        if (tmp.startsWith("http://") || tmp.startsWith("https://") || tmp.startsWith("www.")) {
+                            System.out.println(RED + "Do NOT type the full URL. Only username is required." + RESET);
+                            System.out.println(YELLOW + "Correct example: " + RESET + " ahmet");
                             break;
                         }
 
+                        // Boşluk içeremez
+                        if (tmp.contains(" ")) {
+                            System.out.println(RED + "Username cannot contain spaces." + RESET);
+                            break;
+                        }
+
+                        // Final format (sadece bu!)
+                        linkedin = "linkedin.com/in/" + tmp;
                         step++;
                         break;
                     }
-
                     // ================== STEP 8: BIRTH DATE (REQUIRED) ==================
                     case 8: {
                         System.out.println();
@@ -649,59 +665,76 @@ public class SeniorDevMenu extends JuniorDevMenu {
     }
 
     private void handleAddMultipleContacts() {
-    clearScreen();
-    System.out.println(CYAN + "=== ADD MULTIPLE CONTACTS ===" + RESET);
-    System.out.println(YELLOW + "Type 'q' to cancel at any time." + RESET);
 
-    int n = 0;
-
-    while (true) {
-        System.out.print("How many contacts? (1-10): ");
-        String in = readTrimmed();
-
-        if (isCancelKeyword(in)) {
-            System.out.println(YELLOW + "Cancelled." + RESET);
-            waitForEnter();
-            return;
-        }
-
-        try {
-            n = Integer.parseInt(in);
-        } catch (Exception e) {
-            System.out.println(RED + "Please enter a number from 1 to 10." + RESET);
-            continue;
-        }
-
-        if (n < 1 || n > 10) {
-            System.out.println(RED + "Number must be between 1 and 10." + RESET);
-            continue;
-        }
-        break;
-    }
-
-    for (int i = 1; i <= n; i++) {
         clearScreen();
         System.out.println(CYAN + "=== ADD MULTIPLE CONTACTS ===" + RESET);
-        System.out.println(YELLOW + "Contact " + i + " of " + n + RESET);
-        System.out.println(YELLOW + "(Press 'q' during entry to quit)" + RESET);
-
-        handleAddContact();
-
+        System.out.println(YELLOW + "You can type 'q' at any time to cancel." + RESET);
+        System.out.println(YELLOW + "You can type 'b' to go back to the previous contact." + RESET);
         System.out.println();
-        System.out.println(GREEN + "Contact " + i + " completed." + RESET);
 
-        System.out.print("Continue adding (ENTER) or type q to quit: ");
-        String next = readTrimmed();
-        if (isCancelKeyword(next)) {
-            System.out.println(YELLOW + "Stopped early by user." + RESET);
-            waitForEnter();
-            return;
+        int total = 0;
+
+        while (true) {
+            System.out.print("How many contacts? (1-10): ");
+            String in = readTrimmed();
+
+            if (isCancelKeyword(in)) {
+                System.out.println(YELLOW + "Cancelled." + RESET);
+                waitForEnter();
+                return;
+            }
+
+            try {
+                total = Integer.parseInt(in);
+            } catch (Exception e) {
+                System.out.println(RED + "Please enter a valid number 1-10." + RESET);
+                continue;
+            }
+
+            if (total < 1 || total > 10) {
+                System.out.println(RED + "Number must be between 1 and 10." + RESET);
+                continue;
+            }
+
+            break;
         }
+
+        int index = 1;
+
+        while (index <= total) {
+
+            clearScreen();
+            System.out.println(CYAN + "=== ADD MULTIPLE CONTACTS ===" + RESET);
+            System.out.println(YELLOW + "Contact " + index + " of " + total + RESET);
+            System.out.println(YELLOW + "(Inside form: 'b' to go back, 'q' to cancel)" + RESET);
+            System.out.println();
+
+            handleAddContact();  
+
+            System.out.println(GREEN + "Contact " + index + " completed." + RESET);
+            System.out.println();
+
+            System.out.print("Press ENTER to continue, 'b' to redo this contact, 'q' to quit: ");
+            String next = readTrimmed();
+
+            if (isCancelKeyword(next)) {
+                System.out.println(YELLOW + "Stopped early by user." + RESET);
+                waitForEnter();
+                return;
+            }
+
+            if (isBackCommand(next)) {
+                System.out.println(YELLOW + "Redoing contact " + index + "..." + RESET);
+                continue; // Aynı kişiyi tekrar gir
+            }
+
+            index++; // Sonraki kişiye geç
+        }
+
+        System.out.println(GREEN + "All contacts added successfully." + RESET);
+        waitForEnter();
     }
 
-    System.out.println(GREEN + "All contacts added." + RESET);
-    waitForEnter();
-}
 
 
     // ============================= DELETE ===============================
