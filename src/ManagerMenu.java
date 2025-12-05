@@ -24,30 +24,37 @@ public class ManagerMenu extends TesterMenu {
         while (true) {
             clearScreen();
             String realFullName = loadRealFullName();
+
             System.out.println(CYAN + "=== MANAGER MENU ===" + RESET);
-            System.out.println("User : " + realFullName + " (" + username + ")");
-            System.out.println("Role : " + role);
+            System.out.println(GREEN + "User: " + RESET + realFullName + " (" + username + ")");
+            System.out.println(GREEN + "Role: " + RESET + role);
             System.out.println();
+
             if (passwordStrengthAtLogin != null && !passwordStrengthAtLogin.isBlank()) {
                 printPasswordStrengthBanner();
                 System.out.println();
             }
-            System.out.println("1. Change password");
-            System.out.println("2. List all users");
-            System.out.println("3. Add new user");
-            System.out.println("4. Update existing user");
-            System.out.println("5. Delete / fire user");
-            System.out.println("6. Contacts statistical info");
-            System.out.println("7. Undo last action (Update/Delete)");
-            System.out.println("8. Logout");
-            System.out.print("Select an option (1-8): ");
+
+            System.out.println(CYAN + "Please select an option:" + RESET);
+            System.out.println(GREEN + "1)" + RESET + " Change password");
+            System.out.println(GREEN + "2)" + RESET + " List all users");
+            System.out.println(GREEN + "3)" + RESET + " Add new user");
+            System.out.println(GREEN + "4)" + RESET + " Update existing user");
+            System.out.println(GREEN + "5)" + RESET + " Delete / fire user");
+            System.out.println(GREEN + "6)" + RESET + " Contacts statistical info");
+            System.out.println(GREEN + "7)" + RESET + " Undo last action (Add/Update/Delete)");
+            System.out.println(GREEN + "8)" + RESET + " Logout");
+            System.out.print(YELLOW + "Select an option (1-8): " + RESET);
+
             String input = scanner.nextLine().trim();
             int choice;
+
             if (input.isEmpty()) {
                 System.out.println(RED + "Please enter a number." + RESET);
                 waitForEnter();
                 continue;
             }
+
             try {
                 choice = Integer.parseInt(input);
             } catch (NumberFormatException e) {
@@ -55,17 +62,18 @@ public class ManagerMenu extends TesterMenu {
                 waitForEnter();
                 continue;
             }
+
             try {
                 switch (choice) {
-                    case 1 -> handleChangePassword();    
-                    case 2 -> handleListUsers(true); 
+                    case 1 -> handleChangePassword();
+                    case 2 -> handleListUsers(true);
                     case 3 -> handleAddUser();
                     case 4 -> handleUpdateUser();
                     case 5 -> handleDeleteUser();
                     case 6 -> handleContactsStatistics();
                     case 7 -> handleUndoManager();
                     case 8 -> {
-                        System.out.println("Logging out. Goodbye, " + realFullName + ".");
+                        System.out.println(YELLOW + "Logging out. Goodbye, " + realFullName + "." + RESET);
                         return;
                     }
                     default -> {
@@ -80,22 +88,70 @@ public class ManagerMenu extends TesterMenu {
         }
     }
 
+    // ============================= SMALL HELPERS =============================
+
+    private boolean isCancelKeyword(String in) {
+        String t = (in == null ? "" : in.trim()).toLowerCase();
+        return t.equals("q") || t.equals("quit") || t.equals("exit");
+    }
+
+    private boolean isValidUsernameFormat(String text) {
+        if (text == null) return false;
+        text = text.trim();
+        if (text.isEmpty()) return false;
+        if (text.length() > MAX_USERNAME_LEN) return false;
+        if (text.contains(" ")) return false;
+        // letters (with Turkish), digits, underscore, dot
+        return text.matches("[A-Za-zÇĞİÖŞÜçğıöşü0-9_.]+");
+    }
+
+    // Name / surname: only letters (Turkish), no space, no digit, no symbol
+    private boolean isValidPureName(String text, int maxLen) {
+        if (text == null) return false;
+        text = text.trim();
+        if (text.isEmpty()) return false;
+        if (text.length() > maxLen) return false;
+        return text.matches("[A-Za-zÇĞİÖŞÜçğıöşü]+");
+    }
+
+    // Kullanıcıya "retry mi back mi?" soran helper
+    private boolean askRetry() {
+        while (true) {
+            System.out.print("Would you like to try again? (Y/N): ");
+            String ans = scanner.nextLine().trim().toLowerCase();
+            if (ans.equals("y") || ans.equals("yes")) {
+                return true;
+            } else if (ans.equals("n") || ans.equals("no")) {
+                return false;
+            } else {
+                System.out.println(YELLOW + "Please enter Y or N." + RESET);
+            }
+        }
+    }
+
+    // ============================= LIST USERS =============================
+
     private void handleListUsers(boolean pause) {
         clearScreen();
         System.out.println(CYAN + "=== USER LIST ===" + RESET);
+
         Connection con = getConnection();
         if (con == null) {
             System.out.println(RED + "Database connection failed." + RESET);
             if (pause) waitForEnter();
             return;
         }
+
         String sql = "SELECT user_id, username, name, surname, role, created_at FROM users ORDER BY user_id";
+
         try (PreparedStatement stmt = con.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
+
             System.out.printf("%-4s %-15s %-22s %-18s %-20s%n",
                     "ID", "Username", "Full Name", "Role", "Created At");
             System.out.printf("%-4s %-15s %-22s %-18s %-20s%n",
                     "----", "---------------", "----------------------", "----------------", "-------------------");
+
             boolean empty = true;
             while (rs.next()) {
                 empty = false;
@@ -128,62 +184,63 @@ public class ManagerMenu extends TesterMenu {
         if (pause) waitForEnter();
     }
 
+    // ============================= ADD USER (VALIDATION + UNDO + PW STRENGTH) =============================
+
     private void handleAddUser() {
         clearScreen();
         System.out.println(CYAN + "=== ADD NEW USER ===" + RESET);
-        System.out.println("Type 'q' at any time to cancel.\n");
-      
+        System.out.println(YELLOW + "You can type 'q' at any time to cancel." + RESET);
+        System.out.println(YELLOW + "Username: letters (Turkish supported), digits, _ and . are allowed. No spaces." + RESET);
+        System.out.println(YELLOW + "Name / Surname: only letters (Turkish supported). No spaces, no digits, no symbols." + RESET);
+        System.out.println(YELLOW + "Max length: username/name/surname/password = 50 characters." + RESET);
+        System.out.println();
+
+        // ---------- USERNAME ----------
         String newUsername;
         while (true) {
             System.out.print("Username: ");
             newUsername = scanner.nextLine().trim();
-            if (newUsername.equalsIgnoreCase("q")) return;
+            if (isCancelKeyword(newUsername)) return;
 
-            if (newUsername.isEmpty()) {
-                System.out.println(RED + "Username cannot be empty." + RESET);
-                continue;
-            }
-            if (newUsername.length() > MAX_USERNAME_LEN) {
-                System.out.println(RED + "Username is too long." + RESET);
+            if (!isValidUsernameFormat(newUsername)) {
+                System.out.println(RED + "Invalid username format." + RESET);
+                System.out.println("Rules: letters (Turkish), digits, underscore and dot are allowed. No spaces. Max 50 chars.");
                 continue;
             }
             break;
         }
-    
+
+        // ---------- NAME ----------
         String name;
         while (true) {
             System.out.print("Name: ");
             name = scanner.nextLine().trim();
-            if (name.equalsIgnoreCase("q")) return;
+            if (isCancelKeyword(name)) return;
 
-            if (name.isEmpty()) {
-                System.out.println(RED + "Name cannot be empty." + RESET);
-                continue;
-            }
-            if (name.length() > MAX_NAME_LEN) {
-                System.out.println(RED + "Name is too long." + RESET);
+            if (!isValidPureName(name, MAX_NAME_LEN)) {
+                System.out.println(RED + "Invalid name format." + RESET);
+                System.out.println("Rules: only letters (Turkish supported). No spaces, no digits, no symbols. Max 50 chars.");
                 continue;
             }
             break;
         }
 
+        // ---------- SURNAME ----------
         String surname;
         while (true) {
             System.out.print("Surname: ");
             surname = scanner.nextLine().trim();
-            if (surname.equalsIgnoreCase("q")) return;
+            if (isCancelKeyword(surname)) return;
 
-            if (surname.isEmpty()) {
-                System.out.println(RED + "Surname cannot be empty." + RESET);
-                continue;
-            }
-            if (surname.length() > MAX_SURNAME_LEN) {
-                System.out.println(RED + "Surname is too long." + RESET);
+            if (!isValidPureName(surname, MAX_SURNAME_LEN)) {
+                System.out.println(RED + "Invalid surname format." + RESET);
+                System.out.println("Rules: only letters (Turkish supported). No spaces, no digits, no symbols. Max 50 chars.");
                 continue;
             }
             break;
         }
 
+        // ---------- ROLE ----------
         String roleStr = selectRole();
         if (roleStr == null) {
             System.out.println(YELLOW + "Operation cancelled." + RESET);
@@ -191,21 +248,60 @@ public class ManagerMenu extends TesterMenu {
             return;
         }
 
+        // ---------- PASSWORD + STRENGTH + SUGGESTION ----------
         String password;
+
+        String suggestedPassword = generateStrongPasswordSuggestion();
+        System.out.println();
+        System.out.println("Here is a strong password suggestion (optional):");
+        System.out.println(GREEN + suggestedPassword + RESET);
+        System.out.println("You can type this exactly as the new user's password, or create your own.");
+        System.out.println();
+
         while (true) {
             System.out.print("Password: ");
             password = scanner.nextLine();
             if (password == null) password = "";
             password = password.trim();
-            if (password.equalsIgnoreCase("q")) return;
+            if (isCancelKeyword(password)) {
+                System.out.println(YELLOW + "Add user cancelled." + RESET);
+                waitForEnter();
+                return;
+            }
 
             if (password.isEmpty()) {
                 System.out.println(RED + "Password cannot be empty." + RESET);
                 continue;
             }
             if (password.length() > MAX_PASSWORD_LEN) {
-                System.out.println(RED + "Password is too long." + RESET);
+                System.out.println(RED + "Password is too long (max " + MAX_PASSWORD_LEN + ")." + RESET);
                 continue;
+            }
+
+            String strength = evaluatePasswordStrength(password);
+            System.out.println("Password strength: " + YELLOW + strength.toUpperCase() + RESET);
+
+            if ("very_weak".equals(strength) || "weak".equals(strength)) {
+                System.out.print(
+                        RED +
+                        "This password is " + strength.replace('_', ' ') +
+                        ". Are you sure you want to use it? (y/n, q = cancel add user): " +
+                        RESET
+                );
+                String ans = scanner.nextLine().trim().toLowerCase();
+                if (isCancelKeyword(ans)) {
+                    System.out.println(YELLOW + "Add user cancelled." + RESET);
+                    waitForEnter();
+                    return;
+                }
+                if (ans.equals("n") || ans.equals("no")) {
+                    System.out.println(YELLOW + "Okay, please enter a stronger password." + RESET);
+                    continue;
+                }
+                if (!(ans.equals("y") || ans.equals("yes"))) {
+                    System.out.println(YELLOW + "Please answer with y or n (or q to cancel)." + RESET);
+                    continue;
+                }
             }
 
             System.out.print("Confirm password: ");
@@ -213,10 +309,17 @@ public class ManagerMenu extends TesterMenu {
             if (confirm == null) confirm = "";
             confirm = confirm.trim();
 
+            if (isCancelKeyword(confirm)) {
+                System.out.println(YELLOW + "Add user cancelled." + RESET);
+                waitForEnter();
+                return;
+            }
+
             if (!password.equals(confirm)) {
                 System.out.println(RED + "Passwords do not match. Try again." + RESET);
                 continue;
             }
+
             break;
         }
 
@@ -236,16 +339,28 @@ public class ManagerMenu extends TesterMenu {
 
         String sql = "INSERT INTO users (username, password_hash, name, surname, role) VALUES (?,?,?,?,?)";
 
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
+        boolean added = false;
+        int newUserId = -1;
+
+        try (PreparedStatement ps = con.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, newUsername);
             ps.setString(2, hash);
             ps.setString(3, name);
             ps.setString(4, surname);
             ps.setString(5, roleStr);
 
-            ps.executeUpdate();
-            System.out.println(GREEN + "User added successfully." + RESET);
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                try (ResultSet keys = ps.getGeneratedKeys()) {
+                    if (keys.next()) {
+                        newUserId = keys.getInt(1);
+                    }
+                }
+                System.out.println(GREEN + "User added successfully. (ID = " + newUserId + ")" + RESET);
+                added = true;
 
+                undoUserStack.push(new UserSnapshot("ADD", newUserId, newUsername, hash, name, surname, roleStr));
+            }
         } catch (SQLException e) {
             String msg = e.getMessage();
             if (msg != null && msg.toLowerCase().contains("duplicate")) {
@@ -257,20 +372,47 @@ public class ManagerMenu extends TesterMenu {
             try { con.close(); } catch (SQLException ignored) {}
         }
 
-        waitForEnter();
+        if (!added) {
+            waitForEnter();
+            return;
+        }
+
+        while (true) {
+            System.out.println();
+            System.out.println(CYAN + "What would you like to do next?" + RESET);
+            System.out.println("1. Add another user");
+            System.out.println("2. Return to MANAGER menu");
+            System.out.println("3. Undo this add immediately");
+            System.out.print("Select (1-3): ");
+            String next = scanner.nextLine().trim();
+
+            if (next.equals("1")) {
+                handleAddUser();
+                return;
+            } else if (next.equals("2")) {
+                return;
+            } else if (next.equals("3")) {
+                handleUndoManager();
+                return;
+            } else {
+                System.out.println(YELLOW + "Please select 1, 2 or 3." + RESET);
+            }
+        }
     }
+
+    // ============================= UPDATE USER =============================
 
     private void handleUpdateUser() {
         while (true) {
             clearScreen();
             System.out.println(CYAN + "=== UPDATE USER ===" + RESET);
-            
-            handleListUsers(false); 
+
+            handleListUsers(false);
             System.out.println();
 
             System.out.print("Enter user ID to update (or 'q' to cancel): ");
             String idInput = scanner.nextLine().trim();
-            if (idInput.equalsIgnoreCase("q")) return;
+            if (isCancelKeyword(idInput)) return;
 
             int userId;
             try {
@@ -278,17 +420,23 @@ public class ManagerMenu extends TesterMenu {
                 if (userId <= 0) throw new NumberFormatException();
             } catch (NumberFormatException e) {
                 System.out.println(RED + "Invalid ID format. Please enter a number." + RESET);
-                waitForEnter();
-                continue;
+                if (askRetry()) {
+                    continue;
+                } else {
+                    return;
+                }
             }
 
             Connection con = getConnection();
             if (con == null) {
                 System.out.println(RED + "Database connection failed." + RESET);
-                return;
+                if (askRetry()) {
+                    continue;
+                } else {
+                    return;
+                }
             }
 
-            // Fetch password_hash too for full backup
             String selectSql = "SELECT username, name, surname, role, password_hash FROM users WHERE user_id = ?";
 
             String currentUsername = null;
@@ -302,8 +450,11 @@ public class ManagerMenu extends TesterMenu {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (!rs.next()) {
                         System.out.println(RED + "User ID not found." + RESET);
-                        waitForEnter();
-                        continue;
+                        if (askRetry()) {
+                            continue;
+                        } else {
+                            return;
+                        }
                     }
                     currentUsername = rs.getString("username");
                     currentName = rs.getString("name");
@@ -323,36 +474,46 @@ public class ManagerMenu extends TesterMenu {
                 System.out.println("Current role     : " + currentRole);
                 System.out.println();
 
+                // ---------- NEW USERNAME ----------
                 System.out.print("New username (leave blank to keep '" + currentUsername + "'): ");
                 String newUsername = scanner.nextLine().trim();
                 if (newUsername.isEmpty()) {
                     newUsername = currentUsername;
-                } else if (newUsername.length() > MAX_USERNAME_LEN) {
-                    System.out.println(RED + "Username is too long." + RESET);
-                    waitForEnter();
-                    return;
+                } else {
+                    if (!isValidUsernameFormat(newUsername)) {
+                        System.out.println(RED + "Invalid username format." + RESET);
+                        waitForEnter();
+                        continue;
+                    }
                 }
 
+                // ---------- NEW NAME ----------
                 System.out.print("New name (leave blank to keep '" + currentName + "'): ");
                 String newName = scanner.nextLine().trim();
                 if (newName.isEmpty()) {
                     newName = currentName;
-                } else if (newName.length() > MAX_NAME_LEN) {
-                    System.out.println(RED + "Name is too long." + RESET);
-                    waitForEnter();
-                    return;
+                } else {
+                    if (!isValidPureName(newName, MAX_NAME_LEN)) {
+                        System.out.println(RED + "Invalid name format." + RESET);
+                        waitForEnter();
+                        continue;
+                    }
                 }
 
+                // ---------- NEW SURNAME ----------
                 System.out.print("New surname (leave blank to keep '" + currentSurname + "'): ");
                 String newSurname = scanner.nextLine().trim();
                 if (newSurname.isEmpty()) {
                     newSurname = currentSurname;
-                } else if (newSurname.length() > MAX_SURNAME_LEN) {
-                    System.out.println(RED + "Surname is too long." + RESET);
-                    waitForEnter();
-                    return;
+                } else {
+                    if (!isValidPureName(newSurname, MAX_SURNAME_LEN)) {
+                        System.out.println(RED + "Invalid surname format." + RESET);
+                        waitForEnter();
+                        continue;
+                    }
                 }
 
+                // ---------- ROLE ----------
                 System.out.println("Current role: " + currentRole);
                 System.out.print("Change role? (y/n): ");
                 String changeRoleAns = scanner.nextLine().trim().toLowerCase();
@@ -378,9 +539,16 @@ public class ManagerMenu extends TesterMenu {
                     if (rows > 0) {
                         System.out.println(GREEN + "User updated successfully." + RESET);
                         updateSuccess = true;
-                        
-                        // Push old state to stack with type UPDATE
-                        undoUserStack.push(new UserSnapshot("UPDATE", userId, currentUsername, currentHash, currentName, currentSurname, currentRole));
+
+                        undoUserStack.push(new UserSnapshot(
+                                "UPDATE",
+                                userId,
+                                currentUsername,
+                                currentHash,
+                                currentName,
+                                currentSurname,
+                                currentRole
+                        ));
                     } else {
                         System.out.println(YELLOW + "No changes applied." + RESET);
                     }
@@ -398,7 +566,7 @@ public class ManagerMenu extends TesterMenu {
                     System.out.println();
                     System.out.println(CYAN + "What would you like to do next?" + RESET);
                     System.out.println("1. Update another user");
-                    System.out.println("2. Return to Main Menu");
+                    System.out.println("2. Return to MANAGER menu");
                     System.out.println("3. Undo this update immediately");
                     System.out.print("Select (1-3): ");
                     String nextAction = scanner.nextLine().trim();
@@ -470,17 +638,19 @@ public class ManagerMenu extends TesterMenu {
         }
     }
 
+    // ============================= DELETE USER (UNDO DESTEKLİ) =============================
+
     private void handleDeleteUser() {
         while (true) {
             clearScreen();
             System.out.println(CYAN + "=== DELETE / FIRE USER ===" + RESET);
-            
-            handleListUsers(false); 
+
+            handleListUsers(false);
             System.out.println();
 
             System.out.print("Enter user ID to delete (or 'q' to cancel): ");
             String idInput = scanner.nextLine().trim();
-            if (idInput.equalsIgnoreCase("q")) return;
+            if (isCancelKeyword(idInput)) return;
 
             int userId;
             try {
@@ -488,40 +658,52 @@ public class ManagerMenu extends TesterMenu {
                 if (userId <= 0) throw new NumberFormatException();
             } catch (NumberFormatException e) {
                 System.out.println(RED + "Invalid ID format. Please enter a number." + RESET);
-                waitForEnter();
-                continue;
+                if (askRetry()) {
+                    continue;
+                } else {
+                    return;
+                }
             }
 
             Connection con = getConnection();
             if (con == null) {
                 System.out.println(RED + "Database connection failed." + RESET);
-                return;
+                if (askRetry()) {
+                    continue;
+                } else {
+                    return;
+                }
             }
 
             UserSnapshot backup = null;
             boolean deleteSuccess = false;
 
             try {
-                // 1. GET SNAPSHOT BEFORE DELETE
                 String selectSql = "SELECT * FROM users WHERE user_id = ?";
                 try (PreparedStatement ps = con.prepareStatement(selectSql)) {
                     ps.setInt(1, userId);
                     try (ResultSet rs = ps.executeQuery()) {
                         if (!rs.next()) {
                             System.out.println(RED + "User ID not found." + RESET);
-                            waitForEnter();
-                            continue;
+                            if (askRetry()) {
+                                continue;
+                            } else {
+                                return;
+                            }
                         }
 
                         String uname = rs.getString("username");
-                        if (uname.equals(username)) {
+                        if (uname != null && uname.equals(username)) {
                             System.out.println(RED + "You cannot delete yourself." + RESET);
-                            waitForEnter();
-                            continue;
+                            if (askRetry()) {
+                                continue;
+                            } else {
+                                return;
+                            }
                         }
 
                         backup = new UserSnapshot(
-                            "DELETE", // Action type
+                            "DELETE",
                             rs.getInt("user_id"),
                             rs.getString("username"),
                             rs.getString("password_hash"),
@@ -541,7 +723,6 @@ public class ManagerMenu extends TesterMenu {
                     }
                 }
 
-                // 2. DELETE
                 String deleteSql = "DELETE FROM users WHERE user_id = ?";
                 try (PreparedStatement delPs = con.prepareStatement(deleteSql)) {
                     delPs.setInt(1, userId);
@@ -567,13 +748,13 @@ public class ManagerMenu extends TesterMenu {
                 System.out.println();
                 System.out.println(CYAN + "What would you like to do next?" + RESET);
                 System.out.println("1. Delete another user");
-                System.out.println("2. Return to Main Menu");
+                System.out.println("2. Return to MANAGER menu");
                 System.out.println("3. Undo this deletion immediately");
                 System.out.print("Select (1-3): ");
                 String nextAction = scanner.nextLine().trim();
-                
+
                 if (nextAction.equals("1")) {
-                    continue; 
+                    continue;
                 } else if (nextAction.equals("3")) {
                     handleUndoManager();
                     continue;
@@ -586,7 +767,12 @@ public class ManagerMenu extends TesterMenu {
         }
     }
 
+    // ============================= UNDO (ADD / UPDATE / DELETE) =============================
+
     private void handleUndoManager() {
+        clearScreen();
+        System.out.println(CYAN + "=== UNDO LAST USER ACTION ===" + RESET);
+
         if (undoUserStack.isEmpty()) {
             System.out.println(YELLOW + "Nothing to undo." + RESET);
             waitForEnter();
@@ -604,7 +790,6 @@ public class ManagerMenu extends TesterMenu {
 
         try {
             if ("DELETE".equals(snap.actionType)) {
-                // Undo a DELETE -> INSERT back
                 String sql = "INSERT INTO users (user_id, username, password_hash, name, surname, role) VALUES (?,?,?,?,?,?)";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setInt(1, snap.user_id);
@@ -617,7 +802,6 @@ public class ManagerMenu extends TesterMenu {
                     System.out.println(GREEN + "Undo successful. User '" + snap.username + "' restored." + RESET);
                 }
             } else if ("UPDATE".equals(snap.actionType)) {
-                // Undo an UPDATE -> UPDATE back to old values
                 String sql = "UPDATE users SET username=?, password_hash=?, name=?, surname=?, role=? WHERE user_id=?";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setString(1, snap.username);
@@ -629,15 +813,28 @@ public class ManagerMenu extends TesterMenu {
                     ps.executeUpdate();
                     System.out.println(GREEN + "Undo successful. User '" + snap.username + "' reverted to previous state." + RESET);
                 }
+            } else if ("ADD".equals(snap.actionType)) {
+                String sql = "DELETE FROM users WHERE user_id=?";
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setInt(1, snap.user_id);
+                    int rows = ps.executeUpdate();
+                    if (rows > 0) {
+                        System.out.println(GREEN + "Undo ADD successful. User '" + snap.username + "' removed." + RESET);
+                    } else {
+                        System.out.println(YELLOW + "Nothing removed. User may have been deleted already." + RESET);
+                    }
+                }
             }
         } catch (SQLException e) {
             System.out.println(RED + "Undo failed: " + e.getMessage() + RESET);
         } finally {
             try { con.close(); } catch (SQLException ignored) {}
         }
-        
+
         waitForEnter();
     }
+
+    // ============================= CONTACT STATS =============================
 
     private void handleContactsStatistics() {
         clearScreen();
@@ -761,15 +958,17 @@ public class ManagerMenu extends TesterMenu {
         waitForEnter();
     }
 
+    // ============================= ROLE SELECTION =============================
+
     private String selectRole() {
         while (true) {
             System.out.println();
-            System.out.println("Select role:");
-            System.out.println("1) Tester");
-            System.out.println("2) Junior Developer");
-            System.out.println("3) Senior Developer");
-            System.out.println("4) Manager");
-            System.out.print("Your choice (1-4, 'q' to cancel): ");
+            System.out.println(CYAN + "Select role:" + RESET);
+            System.out.println(GREEN + "1)" + RESET + " Tester");
+            System.out.println(GREEN + "2)" + RESET + " Junior Developer");
+            System.out.println(GREEN + "3)" + RESET + " Senior Developer");
+            System.out.println(GREEN + "4)" + RESET + " Manager");
+            System.out.print(YELLOW + "Your choice (1-4, 'q' to cancel): " + RESET);
             String choice = scanner.nextLine().trim().toLowerCase();
             if (choice.equals("q")) return null;
             switch (choice) {
@@ -783,8 +982,10 @@ public class ManagerMenu extends TesterMenu {
         }
     }
 
+    // ============================= SNAPSHOT CLASS =============================
+
     private static class UserSnapshot {
-        String actionType;
+        String actionType;  // ADD / UPDATE / DELETE
         int user_id;
         String username;
         String password_hash;

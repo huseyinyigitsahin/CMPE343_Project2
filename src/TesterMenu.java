@@ -873,7 +873,6 @@ public class TesterMenu {
                 boolean isPhone = columnName.equals("phone_primary");
                 boolean isEmail = columnName.equals("email");
 
-                // Additional validation depending on field and operator
                 if (columnName.equals("first_name") || columnName.equals("last_name")) {
                     if (!isValidName(keyword)) {
                         System.out.println(RED + "Invalid name format." + RESET);
