@@ -18,8 +18,8 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`user_id`, `username`, `password_hash`, `name`, `surname`, `role`) VALUES
 (1, 'tt', '0e07cf830957701d43c183f1515f63e6b68027e528f43ef52b1527a520ddec82', 'Huseyin Yigit', 'Sahin', 'Tester'),
 (2, 'jd', 'ad3e69e9aa860657cc6476770fe253d08198746b9fcf9dc3186b47eb85c30335', 'Mert Fahri', 'Cakar', 'Junior Developer'),
-(3, 'sd', '03042cf8100db386818cee4ff0f2972431a62ed78edbd09ac08accfabbefd818', 'Burak', 'Arslan', 'Senior Developer'),
-(4, 'man', '48b676e2b107da679512b793d5fd4cc4329f0c7c17a97cf6e0e3d1005b600b03', 'Nermin Zehra', 'Sipahioglu', 'Manager');
+(3, 'sd', '03042cf8100db386818cee4ff0f2972431a62ed78edbd09ac08accfabbefd818', 'Nermin Zehra', 'Sipahioglu', 'Senior Developer'),
+(4, 'man', '48b676e2b107da679512b793d5fd4cc4329f0c7c17a97cf6e0e3d1005b600b03', 'Burak', 'Arslan', 'Manager');
 
 CREATE TABLE `contacts` (
   `contact_id` int(11) NOT NULL AUTO_INCREMENT,

@@ -1,13 +1,18 @@
 import java.sql.*;
+import java.util.Scanner;
 import java.util.Stack;
 
 public class SeniorDevMenu extends JuniorDevMenu {
 
     private final Stack<SeniorUndoAction> seniorUndoStack;
 
-    public SeniorDevMenu(String username, String fullName, String role) {
-        super(username, fullName, role);
-        seniorUndoStack = new Stack<>();
+    // =========================================================================
+    // CONSTRUCTORS
+    // =========================================================================
+
+    public SeniorDevMenu(String username, String fullName, String role, Scanner scanner, String passwordStrength) {
+        super(username, fullName, role, scanner, passwordStrength);
+        this.seniorUndoStack = new Stack<>();
     }
 
     @Override
