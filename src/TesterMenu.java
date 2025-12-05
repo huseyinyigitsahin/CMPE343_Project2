@@ -6,6 +6,9 @@ import java.sql.SQLException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.ResolverStyle;
 
 public class TesterMenu {
 
@@ -109,9 +112,8 @@ public class TesterMenu {
     }
 
     protected void clearScreen() {
-        for (int i = 0; i < 50; i++) {
-            System.out.println();
-        }
+        System.out.print("\u001B[H\u001B[2J");
+        System.out.flush();
     }
 
     protected static String trimOrEmpty(String s) {
@@ -278,18 +280,21 @@ public class TesterMenu {
         if (!date.matches("\\d{4}-\\d{2}-\\d{2}")) {
             return false;
         }
-        String[] parts = date.split("-");
+        
         try {
-            int y = Integer.parseInt(parts[0]);
-            int m = Integer.parseInt(parts[1]);
-            int d = Integer.parseInt(parts[2]);
-            if (y < 1900 || y > 2100) return false;
-            if (m < 1 || m > 12) return false;
-            if (d < 1 || d > 31) return false;
-        } catch (NumberFormatException e) {
+            java.time.format.DateTimeFormatter formatter = 
+                java.time.format.DateTimeFormatter.ofPattern("uuuu-MM-dd")
+                .withResolverStyle(java.time.format.ResolverStyle.STRICT);
+            
+            java.time.LocalDate parsedDate = java.time.LocalDate.parse(date, formatter);
+
+            int year = parsedDate.getYear();
+            if (year < 1900 || year > 2100) return false;
+            
+            return true;
+        } catch (Exception e) {
             return false;
         }
-        return true;
     }
 
     // ====== PASSWORD HELPERS ======
