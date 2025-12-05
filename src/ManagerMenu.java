@@ -96,21 +96,28 @@ public class ManagerMenu extends TesterMenu {
     }
 
     private boolean isValidUsernameFormat(String text) {
-        if (text == null) return false;
+        if (text == null)
+            return false;
         text = text.trim();
-        if (text.isEmpty()) return false;
-        if (text.length() > MAX_USERNAME_LEN) return false;
-        if (text.contains(" ")) return false;
+        if (text.isEmpty())
+            return false;
+        if (text.length() > MAX_USERNAME_LEN)
+            return false;
+        if (text.contains(" "))
+            return false;
         // letters (with Turkish), digits, underscore, dot
         return text.matches("[A-Za-zÇĞİÖŞÜçğıöşü0-9_.]+");
     }
 
     // Name / surname: only letters (Turkish), no space, no digit, no symbol
     private boolean isValidPureName(String text, int maxLen) {
-        if (text == null) return false;
+        if (text == null)
+            return false;
         text = text.trim();
-        if (text.isEmpty()) return false;
-        if (text.length() > maxLen) return false;
+        if (text.isEmpty())
+            return false;
+        if (text.length() > maxLen)
+            return false;
         return text.matches("[A-Za-zÇĞİÖŞÜçğıöşü]+");
     }
 
@@ -138,14 +145,15 @@ public class ManagerMenu extends TesterMenu {
         Connection con = getConnection();
         if (con == null) {
             System.out.println(RED + "Database connection failed." + RESET);
-            if (pause) waitForEnter();
+            if (pause)
+                waitForEnter();
             return;
         }
 
         String sql = "SELECT user_id, username, name, surname, role, created_at FROM users ORDER BY user_id";
 
         try (PreparedStatement stmt = con.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+                ResultSet rs = stmt.executeQuery()) {
 
             System.out.printf("%-4s %-15s %-22s %-18s %-20s%n",
                     "ID", "Username", "Full Name", "Role", "Created At");
@@ -162,11 +170,16 @@ public class ManagerMenu extends TesterMenu {
                 String r = rs.getString("role");
                 String created = rs.getString("created_at");
 
-                if (uname == null) uname = "";
-                if (name == null) name = "";
-                if (surname == null) surname = "";
-                if (r == null) r = "";
-                if (created == null) created = "";
+                if (uname == null)
+                    uname = "";
+                if (name == null)
+                    name = "";
+                if (surname == null)
+                    surname = "";
+                if (r == null)
+                    r = "";
+                if (created == null)
+                    created = "";
                 String fn = (name + " " + surname).trim();
                 System.out.printf("%-4d %-15s %-22s %-18s %-20s%n",
                         id, uname, fn, r, created);
@@ -178,20 +191,27 @@ public class ManagerMenu extends TesterMenu {
         } catch (SQLException e) {
             System.out.println(RED + "Error while listing users: " + e.getMessage() + RESET);
         } finally {
-            try { con.close(); } catch (SQLException ignored) {}
+            try {
+                con.close();
+            } catch (SQLException ignored) {
+            }
         }
 
-        if (pause) waitForEnter();
+        if (pause)
+            waitForEnter();
     }
 
-    // ============================= ADD USER (VALIDATION + UNDO + PW STRENGTH) =============================
+    // ============================= ADD USER (VALIDATION + UNDO + PW STRENGTH)
+    // =============================
 
     private void handleAddUser() {
         clearScreen();
         System.out.println(CYAN + "=== ADD NEW USER ===" + RESET);
         System.out.println(YELLOW + "You can type 'q' at any time to cancel." + RESET);
-        System.out.println(YELLOW + "Username: letters (Turkish supported), digits, _ and . are allowed. No spaces." + RESET);
-        System.out.println(YELLOW + "Name / Surname: only letters (Turkish supported). No spaces, no digits, no symbols." + RESET);
+        System.out.println(
+                YELLOW + "Username: letters (Turkish supported), digits, _ and . are allowed. No spaces." + RESET);
+        System.out.println(
+                YELLOW + "Name / Surname: only letters (Turkish supported). No spaces, no digits, no symbols." + RESET);
         System.out.println(YELLOW + "Max length: username/name/surname/password = 50 characters." + RESET);
         System.out.println();
 
@@ -200,11 +220,13 @@ public class ManagerMenu extends TesterMenu {
         while (true) {
             System.out.print("Username: ");
             newUsername = scanner.nextLine().trim();
-            if (isCancelKeyword(newUsername)) return;
+            if (isCancelKeyword(newUsername))
+                return;
 
             if (!isValidUsernameFormat(newUsername)) {
                 System.out.println(RED + "Invalid username format." + RESET);
-                System.out.println("Rules: letters (Turkish), digits, underscore and dot are allowed. No spaces. Max 50 chars.");
+                System.out.println(
+                        "Rules: letters (Turkish), digits, underscore and dot are allowed. No spaces. Max 50 chars.");
                 continue;
             }
             break;
@@ -215,11 +237,13 @@ public class ManagerMenu extends TesterMenu {
         while (true) {
             System.out.print("Name: ");
             name = scanner.nextLine().trim();
-            if (isCancelKeyword(name)) return;
+            if (isCancelKeyword(name))
+                return;
 
             if (!isValidPureName(name, MAX_NAME_LEN)) {
                 System.out.println(RED + "Invalid name format." + RESET);
-                System.out.println("Rules: only letters (Turkish supported). No spaces, no digits, no symbols. Max 50 chars.");
+                System.out.println(
+                        "Rules: only letters (Turkish supported). No spaces, no digits, no symbols. Max 50 chars.");
                 continue;
             }
             break;
@@ -230,11 +254,13 @@ public class ManagerMenu extends TesterMenu {
         while (true) {
             System.out.print("Surname: ");
             surname = scanner.nextLine().trim();
-            if (isCancelKeyword(surname)) return;
+            if (isCancelKeyword(surname))
+                return;
 
             if (!isValidPureName(surname, MAX_SURNAME_LEN)) {
                 System.out.println(RED + "Invalid surname format." + RESET);
-                System.out.println("Rules: only letters (Turkish supported). No spaces, no digits, no symbols. Max 50 chars.");
+                System.out.println(
+                        "Rules: only letters (Turkish supported). No spaces, no digits, no symbols. Max 50 chars.");
                 continue;
             }
             break;
@@ -261,7 +287,8 @@ public class ManagerMenu extends TesterMenu {
         while (true) {
             System.out.print("Password: ");
             password = scanner.nextLine();
-            if (password == null) password = "";
+            if (password == null)
+                password = "";
             password = password.trim();
             if (isCancelKeyword(password)) {
                 System.out.println(YELLOW + "Add user cancelled." + RESET);
@@ -284,10 +311,9 @@ public class ManagerMenu extends TesterMenu {
             if ("very_weak".equals(strength) || "weak".equals(strength)) {
                 System.out.print(
                         RED +
-                        "This password is " + strength.replace('_', ' ') +
-                        ". Are you sure you want to use it? (y/n, q = cancel add user): " +
-                        RESET
-                );
+                                "This password is " + strength.replace('_', ' ') +
+                                ". Are you sure you want to use it? (y/n, q = cancel add user): " +
+                                RESET);
                 String ans = scanner.nextLine().trim().toLowerCase();
                 if (isCancelKeyword(ans)) {
                     System.out.println(YELLOW + "Add user cancelled." + RESET);
@@ -306,7 +332,8 @@ public class ManagerMenu extends TesterMenu {
 
             System.out.print("Confirm password: ");
             String confirm = scanner.nextLine();
-            if (confirm == null) confirm = "";
+            if (confirm == null)
+                confirm = "";
             confirm = confirm.trim();
 
             if (isCancelKeyword(confirm)) {
@@ -369,7 +396,10 @@ public class ManagerMenu extends TesterMenu {
                 System.out.println(RED + "Error: " + msg + RESET);
             }
         } finally {
-            try { con.close(); } catch (SQLException ignored) {}
+            try {
+                con.close();
+            } catch (SQLException ignored) {
+            }
         }
 
         if (!added) {
@@ -412,12 +442,14 @@ public class ManagerMenu extends TesterMenu {
 
             System.out.print("Enter user ID to update (or 'q' to cancel): ");
             String idInput = scanner.nextLine().trim();
-            if (isCancelKeyword(idInput)) return;
+            if (isCancelKeyword(idInput))
+                return;
 
             int userId;
             try {
                 userId = Integer.parseInt(idInput);
-                if (userId <= 0) throw new NumberFormatException();
+                if (userId <= 0)
+                    throw new NumberFormatException();
             } catch (NumberFormatException e) {
                 System.out.println(RED + "Invalid ID format. Please enter a number." + RESET);
                 if (askRetry()) {
@@ -463,18 +495,22 @@ public class ManagerMenu extends TesterMenu {
                     currentHash = rs.getString("password_hash");
                 }
 
-                if (currentUsername == null) currentUsername = "";
-                if (currentName == null) currentName = "";
-                if (currentSurname == null) currentSurname = "";
-                if (currentRole == null) currentRole = "";
-                if (currentHash == null) currentHash = "";
+                if (currentUsername == null)
+                    currentUsername = "";
+                if (currentName == null)
+                    currentName = "";
+                if (currentSurname == null)
+                    currentSurname = "";
+                if (currentRole == null)
+                    currentRole = "";
+                if (currentHash == null)
+                    currentHash = "";
 
                 System.out.println("Current username : " + currentUsername);
                 System.out.println("Current name     : " + currentName + " " + currentSurname);
                 System.out.println("Current role     : " + currentRole);
                 System.out.println();
 
-                // ---------- NEW USERNAME ----------
                 System.out.print("New username (leave blank to keep '" + currentUsername + "'): ");
                 String newUsername = scanner.nextLine().trim();
                 if (newUsername.isEmpty()) {
@@ -487,7 +523,6 @@ public class ManagerMenu extends TesterMenu {
                     }
                 }
 
-                // ---------- NEW NAME ----------
                 System.out.print("New name (leave blank to keep '" + currentName + "'): ");
                 String newName = scanner.nextLine().trim();
                 if (newName.isEmpty()) {
@@ -500,7 +535,6 @@ public class ManagerMenu extends TesterMenu {
                     }
                 }
 
-                // ---------- NEW SURNAME ----------
                 System.out.print("New surname (leave blank to keep '" + currentSurname + "'): ");
                 String newSurname = scanner.nextLine().trim();
                 if (newSurname.isEmpty()) {
@@ -513,7 +547,6 @@ public class ManagerMenu extends TesterMenu {
                     }
                 }
 
-                // ---------- ROLE ----------
                 System.out.println("Current role: " + currentRole);
                 System.out.print("Change role? (y/n): ");
                 String changeRoleAns = scanner.nextLine().trim().toLowerCase();
@@ -547,10 +580,10 @@ public class ManagerMenu extends TesterMenu {
                                 currentHash,
                                 currentName,
                                 currentSurname,
-                                currentRole
-                        ));
+                                currentRole));
                     } else {
                         System.out.println(YELLOW + "No changes applied." + RESET);
+                        updateSuccess = false;
                     }
                 }
 
@@ -560,13 +593,11 @@ public class ManagerMenu extends TesterMenu {
                     if (resetAns.equals("y") || resetAns.equals("yes")) {
                         resetUserPassword(con, userId);
                     }
-                }
 
-                if (updateSuccess) {
                     System.out.println();
                     System.out.println(CYAN + "What would you like to do next?" + RESET);
                     System.out.println("1. Update another user");
-                    System.out.println("2. Return to MANAGER menu");
+                    System.out.println("2. Return to Main Menu");
                     System.out.println("3. Undo this update immediately");
                     System.out.print("Select (1-3): ");
                     String nextAction = scanner.nextLine().trim();
@@ -578,12 +609,25 @@ public class ManagerMenu extends TesterMenu {
                     } else {
                         break;
                     }
+                } else {
+                    if (askRetry()) {
+                        continue;
+                    } else {
+                        break;
+                    }
                 }
 
             } catch (SQLException e) {
                 System.out.println(RED + "Error: " + e.getMessage() + RESET);
+                if (askRetry())
+                    continue;
+                else
+                    break;
             } finally {
-                try { con.close(); } catch (SQLException ignored) {}
+                try {
+                    con.close();
+                } catch (SQLException ignored) {
+                }
             }
         }
     }
@@ -596,7 +640,8 @@ public class ManagerMenu extends TesterMenu {
         while (true) {
             System.out.print("New password: ");
             password = scanner.nextLine();
-            if (password == null) password = "";
+            if (password == null)
+                password = "";
             password = password.trim();
 
             if (password.isEmpty()) {
@@ -610,7 +655,8 @@ public class ManagerMenu extends TesterMenu {
 
             System.out.print("Confirm new password: ");
             String confirm = scanner.nextLine();
-            if (confirm == null) confirm = "";
+            if (confirm == null)
+                confirm = "";
             confirm = confirm.trim();
 
             if (!password.equals(confirm)) {
@@ -638,7 +684,8 @@ public class ManagerMenu extends TesterMenu {
         }
     }
 
-    // ============================= DELETE USER (UNDO DESTEKLİ) =============================
+    // ============================= DELETE USER (UNDO DESTEKLİ)
+    // =============================
 
     private void handleDeleteUser() {
         while (true) {
@@ -650,12 +697,14 @@ public class ManagerMenu extends TesterMenu {
 
             System.out.print("Enter user ID to delete (or 'q' to cancel): ");
             String idInput = scanner.nextLine().trim();
-            if (isCancelKeyword(idInput)) return;
+            if (isCancelKeyword(idInput))
+                return;
 
             int userId;
             try {
                 userId = Integer.parseInt(idInput);
-                if (userId <= 0) throw new NumberFormatException();
+                if (userId <= 0)
+                    throw new NumberFormatException();
             } catch (NumberFormatException e) {
                 System.out.println(RED + "Invalid ID format. Please enter a number." + RESET);
                 if (askRetry()) {
@@ -703,14 +752,13 @@ public class ManagerMenu extends TesterMenu {
                         }
 
                         backup = new UserSnapshot(
-                            "DELETE",
-                            rs.getInt("user_id"),
-                            rs.getString("username"),
-                            rs.getString("password_hash"),
-                            rs.getString("name"),
-                            rs.getString("surname"),
-                            rs.getString("role")
-                        );
+                                "DELETE",
+                                rs.getInt("user_id"),
+                                rs.getString("username"),
+                                rs.getString("password_hash"),
+                                rs.getString("name"),
+                                rs.getString("surname"),
+                                rs.getString("role"));
 
                         System.out.println("User to delete: " + uname + " (" + rs.getString("role") + ")");
                         System.out.print("Are you sure? (y/n): ");
@@ -741,7 +789,10 @@ public class ManagerMenu extends TesterMenu {
             } catch (SQLException e) {
                 System.out.println(RED + "Error: " + e.getMessage() + RESET);
             } finally {
-                try { con.close(); } catch (SQLException ignored) {}
+                try {
+                    con.close();
+                } catch (SQLException ignored) {
+                }
             }
 
             if (deleteSuccess) {
@@ -767,7 +818,8 @@ public class ManagerMenu extends TesterMenu {
         }
     }
 
-    // ============================= UNDO (ADD / UPDATE / DELETE) =============================
+    // ============================= UNDO (ADD / UPDATE / DELETE)
+    // =============================
 
     private void handleUndoManager() {
         clearScreen();
@@ -811,7 +863,8 @@ public class ManagerMenu extends TesterMenu {
                     ps.setString(5, snap.role);
                     ps.setInt(6, snap.user_id);
                     ps.executeUpdate();
-                    System.out.println(GREEN + "Undo successful. User '" + snap.username + "' reverted to previous state." + RESET);
+                    System.out.println(GREEN + "Undo successful. User '" + snap.username
+                            + "' reverted to previous state." + RESET);
                 }
             } else if ("ADD".equals(snap.actionType)) {
                 String sql = "DELETE FROM users WHERE user_id=?";
@@ -819,7 +872,8 @@ public class ManagerMenu extends TesterMenu {
                     ps.setInt(1, snap.user_id);
                     int rows = ps.executeUpdate();
                     if (rows > 0) {
-                        System.out.println(GREEN + "Undo ADD successful. User '" + snap.username + "' removed." + RESET);
+                        System.out
+                                .println(GREEN + "Undo ADD successful. User '" + snap.username + "' removed." + RESET);
                     } else {
                         System.out.println(YELLOW + "Nothing removed. User may have been deleted already." + RESET);
                     }
@@ -828,7 +882,10 @@ public class ManagerMenu extends TesterMenu {
         } catch (SQLException e) {
             System.out.println(RED + "Undo failed: " + e.getMessage() + RESET);
         } finally {
-            try { con.close(); } catch (SQLException ignored) {}
+            try {
+                con.close();
+            } catch (SQLException ignored) {
+            }
         }
 
         waitForEnter();
@@ -850,18 +907,19 @@ public class ManagerMenu extends TesterMenu {
         try {
             System.out.println(YELLOW + "\nTop 5 First Names (Most Frequent):" + RESET);
             String nameSql = "SELECT first_name, COUNT(*) AS cnt " +
-                             "FROM contacts GROUP BY first_name " +
-                             "HAVING first_name IS NOT NULL AND first_name <> '' " +
-                             "ORDER BY cnt DESC, first_name ASC LIMIT 5";
+                    "FROM contacts GROUP BY first_name " +
+                    "HAVING first_name IS NOT NULL AND first_name <> '' " +
+                    "ORDER BY cnt DESC, first_name ASC LIMIT 5";
             try (PreparedStatement ps = con.prepareStatement(nameSql);
-                 ResultSet rs = ps.executeQuery()) {
+                    ResultSet rs = ps.executeQuery()) {
 
                 boolean any = false;
                 while (rs.next()) {
                     any = true;
                     String fn = rs.getString("first_name");
                     int cnt = rs.getInt("cnt");
-                    if (fn == null) fn = "(NULL)";
+                    if (fn == null)
+                        fn = "(NULL)";
                     System.out.printf("  %-15s : %d%n", fn, cnt);
                 }
                 if (!any) {
@@ -871,18 +929,19 @@ public class ManagerMenu extends TesterMenu {
 
             System.out.println(YELLOW + "\nTop 5 Surnames (Most Frequent):" + RESET);
             String surnameSql = "SELECT last_name, COUNT(*) AS cnt " +
-                             "FROM contacts GROUP BY last_name " +
-                             "HAVING last_name IS NOT NULL AND last_name <> '' " +
-                             "ORDER BY cnt DESC, last_name ASC LIMIT 5";
+                    "FROM contacts GROUP BY last_name " +
+                    "HAVING last_name IS NOT NULL AND last_name <> '' " +
+                    "ORDER BY cnt DESC, last_name ASC LIMIT 5";
             try (PreparedStatement ps = con.prepareStatement(surnameSql);
-                 ResultSet rs = ps.executeQuery()) {
+                    ResultSet rs = ps.executeQuery()) {
 
                 boolean any = false;
                 while (rs.next()) {
                     any = true;
                     String ln = rs.getString("last_name");
                     int cnt = rs.getInt("cnt");
-                    if (ln == null) ln = "(NULL)";
+                    if (ln == null)
+                        ln = "(NULL)";
                     System.out.printf("  %-15s : %d%n", ln, cnt);
                 }
                 if (!any) {
@@ -892,26 +951,27 @@ public class ManagerMenu extends TesterMenu {
 
             System.out.println(YELLOW + "\nEmail Provider Statistics:" + RESET);
             String emailSql = "SELECT SUBSTRING_INDEX(email, '@', -1) as provider, COUNT(*) as cnt " +
-                              "FROM contacts WHERE email LIKE '%@%' " +
-                              "GROUP BY provider ORDER BY cnt DESC LIMIT 5";
+                    "FROM contacts WHERE email LIKE '%@%' " +
+                    "GROUP BY provider ORDER BY cnt DESC LIMIT 5";
             try (PreparedStatement ps = con.prepareStatement(emailSql);
-                 ResultSet rs = ps.executeQuery()) {
+                    ResultSet rs = ps.executeQuery()) {
                 boolean any = false;
-                while(rs.next()){
+                while (rs.next()) {
                     any = true;
                     System.out.printf("  %-20s : %d%n", rs.getString("provider"), rs.getInt("cnt"));
                 }
-                if(!any) System.out.println("  (no data)");
+                if (!any)
+                    System.out.println("  (no data)");
             }
 
             System.out.println(YELLOW + "\nLinkedIn URL Statistics:" + RESET);
-            String linkedinSql =
-                    "SELECT " +
-                    "SUM(CASE WHEN linkedin_url IS NOT NULL AND linkedin_url <> '' THEN 1 ELSE 0 END) AS with_linkedin, " +
+            String linkedinSql = "SELECT " +
+                    "SUM(CASE WHEN linkedin_url IS NOT NULL AND linkedin_url <> '' THEN 1 ELSE 0 END) AS with_linkedin, "
+                    +
                     "SUM(CASE WHEN linkedin_url IS NULL OR linkedin_url = '' THEN 1 ELSE 0 END) AS without_linkedin " +
                     "FROM contacts";
             try (PreparedStatement ps = con.prepareStatement(linkedinSql);
-                 ResultSet rs = ps.executeQuery()) {
+                    ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int withL = rs.getInt("with_linkedin");
                     int withoutL = rs.getInt("without_linkedin");
@@ -923,15 +983,14 @@ public class ManagerMenu extends TesterMenu {
             }
 
             System.out.println(YELLOW + "\nAge Statistics (based on birth_date):" + RESET);
-            String ageSql =
-                    "SELECT " +
+            String ageSql = "SELECT " +
                     "MIN(birth_date) AS oldest_date, " +
                     "MAX(birth_date) AS youngest_date, " +
                     "AVG(TIMESTAMPDIFF(YEAR, birth_date, CURDATE())) AS avg_age, " +
                     "COUNT(*) as total_birth_dates " +
                     "FROM contacts WHERE birth_date IS NOT NULL";
             try (PreparedStatement ps = con.prepareStatement(ageSql);
-                 ResultSet rs = ps.executeQuery()) {
+                    ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int total = rs.getInt("total_birth_dates");
                     if (total > 0) {
@@ -951,7 +1010,10 @@ public class ManagerMenu extends TesterMenu {
         } catch (SQLException e) {
             System.out.println(RED + "Error while calculating statistics: " + e.getMessage() + RESET);
         } finally {
-            try { con.close(); } catch (SQLException ignored) {}
+            try {
+                con.close();
+            } catch (SQLException ignored) {
+            }
         }
 
         System.out.println();
@@ -970,12 +1032,17 @@ public class ManagerMenu extends TesterMenu {
             System.out.println(GREEN + "4)" + RESET + " Manager");
             System.out.print(YELLOW + "Your choice (1-4, 'q' to cancel): " + RESET);
             String choice = scanner.nextLine().trim().toLowerCase();
-            if (choice.equals("q")) return null;
+            if (choice.equals("q"))
+                return null;
             switch (choice) {
-                case "1": return "Tester";
-                case "2": return "Junior Developer";
-                case "3": return "Senior Developer";
-                case "4": return "Manager";
+                case "1":
+                    return "Tester";
+                case "2":
+                    return "Junior Developer";
+                case "3":
+                    return "Senior Developer";
+                case "4":
+                    return "Manager";
                 default:
                     System.out.println(YELLOW + "Please select 1, 2, 3 or 4 (or 'q' to cancel)." + RESET);
             }
@@ -985,7 +1052,7 @@ public class ManagerMenu extends TesterMenu {
     // ============================= SNAPSHOT CLASS =============================
 
     private static class UserSnapshot {
-        String actionType;  // ADD / UPDATE / DELETE
+        String actionType; // ADD / UPDATE / DELETE
         int user_id;
         String username;
         String password_hash;
@@ -993,7 +1060,8 @@ public class ManagerMenu extends TesterMenu {
         String surname;
         String role;
 
-        public UserSnapshot(String actionType, int user_id, String username, String password_hash, String name, String surname, String role) {
+        public UserSnapshot(String actionType, int user_id, String username, String password_hash, String name,
+                String surname, String role) {
             this.actionType = actionType;
             this.user_id = user_id;
             this.username = username;

@@ -20,17 +20,15 @@ public class AppMain {
 
         Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8);
 
-        // 1) CMPE343 splash + "Press ENTER to continue"
         LoginScreen.showInitialSplash(scanner);
 
-        // 2) Full-screen loading bar (only on login flow)
         LoginScreen.showPreLoginLoadingBar();
 
         int attempts = 0;
 
         while (attempts < MAX_ATTEMPTS) {
             try {
-                // 3) Contact Management + Login Form
+
                 LoginScreen.printLoginFormHeader();
 
                 System.out.print(LoginScreen.CYAN + "|  " + LoginScreen.YELLOW + "Username : " + LoginScreen.RESET);
@@ -65,7 +63,6 @@ public class AppMain {
                 boolean success = LoginScreen.authenticate(username, password);
 
                 if (success) {
-                    // 5) Correct password: full-screen loading bar again
                     LoginScreen.showPostLoginLoadingBar();
 
                     String fullName = username;
@@ -137,7 +134,7 @@ public class AppMain {
                         Thread.sleep(1500);
                     } catch (InterruptedException ignored) {
                     }
-                    attempts = 0; // after logout, login again
+                    attempts = 0;
 
                 } else {
                     attempts++;
@@ -156,7 +153,6 @@ public class AppMain {
                         scanner.close();
                         return;
                     }
-                    // ENTER or anything else → loop continues, show login screen again
                 }
 
             } catch (Exception e) {
@@ -171,13 +167,13 @@ public class AppMain {
         printShutdownAscii();
     }
 
-    // Exit / goodbye ASCII
+
     private static void printShutdownAscii() {
 
-    // Slide-style animated progress bar
+
     int barWidth = 30;
-    int steps = 20;       // kaç frame olacağı (20 frame hızlı ama akıcı)
-    int delayMs = 90;     // hız (login barından biraz daha hızlı)
+    int steps = 20;
+    int delayMs = 90;
 
     for (int i = 0; i <= steps; i++) {
 
@@ -189,7 +185,6 @@ public class AppMain {
         System.out.println(LoginScreen.YELLOW + "Shutting down the system..." + LoginScreen.RESET);
         System.out.println();
 
-        // Bar çizimi
         StringBuilder bar = new StringBuilder();
         for (int j = 0; j < barWidth; j++) {
             if (j < filled) bar.append("=");
@@ -202,7 +197,6 @@ public class AppMain {
         try { Thread.sleep(delayMs); } catch (Exception ignored) {}
     }
 
-    // After bar finishes → goodbye screen
     LoginScreen.clearScreen();
     System.out.println();
     System.out.println(LoginScreen.RED + "#############################################");
