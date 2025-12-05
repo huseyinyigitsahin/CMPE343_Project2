@@ -642,47 +642,60 @@ public class SeniorDevMenu extends JuniorDevMenu {
     }
 
     private void handleAddMultipleContacts() {
-        clearScreen();
-        System.out.println(CYAN + "=== ADD MULTIPLE CONTACTS ===" + RESET);
-        System.out.println(YELLOW + "Type 'q' to cancel." + RESET);
-        System.out.print("How many contacts? (1-10, q to cancel): ");
+    clearScreen();
+    System.out.println(CYAN + "=== ADD MULTIPLE CONTACTS ===" + RESET);
+    System.out.println(YELLOW + "Type 'q' to cancel at any time." + RESET);
 
+    int n = 0;
+
+    while (true) {
+        System.out.print("How many contacts? (1-10): ");
         String in = readTrimmed();
+
         if (isCancelKeyword(in)) {
             System.out.println(YELLOW + "Cancelled." + RESET);
             waitForEnter();
             return;
         }
 
-        int n;
         try {
             n = Integer.parseInt(in);
         } catch (Exception e) {
-            System.out.println(RED + "Invalid number." + RESET);
-            waitForEnter();
-            return;
+            System.out.println(RED + "Please enter a number from 1 to 10." + RESET);
+            continue;
         }
 
-        if (n <= 0) {
-            System.out.println(RED + "Number must be at least 1." + RESET);
+        if (n < 1 || n > 10) {
+            System.out.println(RED + "Number must be between 1 and 10." + RESET);
+            continue;
+        }
+        break;
+    }
+
+    for (int i = 1; i <= n; i++) {
+        clearScreen();
+        System.out.println(CYAN + "=== ADD MULTIPLE CONTACTS ===" + RESET);
+        System.out.println(YELLOW + "Contact " + i + " of " + n + RESET);
+        System.out.println(YELLOW + "(Press 'q' during entry to quit)" + RESET);
+
+        handleAddContact();
+
+        System.out.println();
+        System.out.println(GREEN + "Contact " + i + " completed." + RESET);
+
+        System.out.print("Continue adding (ENTER) or type q to quit: ");
+        String next = readTrimmed();
+        if (isCancelKeyword(next)) {
+            System.out.println(YELLOW + "Stopped early by user." + RESET);
             waitForEnter();
             return;
-        }
-
-        if (n > 10) {
-            System.out.println(RED + "Limit is 10 at a time." + RESET);
-            waitForEnter();
-            return;
-        }
-
-        for (int i = 1; i <= n; i++) {
-            clearScreen();
-            System.out.println(CYAN + "=== ADD MULTIPLE CONTACTS ===" + RESET);
-            System.out.println(YELLOW + "Contact #" + i + " of " + n + RESET);
-            System.out.println();
-            handleAddContact(); // kendi içinde q/b ile yönetiliyor
         }
     }
+
+    System.out.println(GREEN + "All contacts added." + RESET);
+    waitForEnter();
+}
+
 
     // ============================= DELETE ===============================
 
@@ -699,8 +712,11 @@ public class SeniorDevMenu extends JuniorDevMenu {
             String in = readTrimmed();
 
             if (isCancelKeyword(in)) {
+                System.out.println(YELLOW + "Returning to SENIOR menu." + RESET);
+                waitForEnter();
                 return;
             }
+
 
             int id;
             try {
@@ -752,7 +768,11 @@ public class SeniorDevMenu extends JuniorDevMenu {
             System.out.print("Enter IDs comma-separated (e.g. 10,12,15) or q to cancel: ");
             String line = readTrimmed();
 
-            if (isCancelKeyword(line)) return;
+            if (isCancelKeyword(line)) {
+                System.out.println(YELLOW + "Returning to SENIOR menu." + RESET);
+                waitForEnter();
+                return;
+            }
 
             if (line.isEmpty()) {
                 System.out.println(RED + "Input cannot be empty." + RESET);
@@ -786,8 +806,11 @@ public class SeniorDevMenu extends JuniorDevMenu {
 
                 String nextAction = readTrimmed();
                 if (isCancelKeyword(nextAction)) {
+                    System.out.println(YELLOW + "Returning to SENIOR menu." + RESET);
+                    waitForEnter();
                     return;
                 }
+
 
                 if (nextAction.equals("1")) {
                     continue;
