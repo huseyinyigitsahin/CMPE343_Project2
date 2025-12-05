@@ -109,10 +109,11 @@ public class AppMain {
                         SeniorDevMenu seniorMenu = new SeniorDevMenu(username, fullName, role, scanner, passwordStrength);
                         seniorMenu.showMenu();
                     } 
-                    else if ("Manager".equalsIgnoreCase(role)) {
-                        System.out.println(YELLOW + ">> Manager menu is under construction." + RESET);
-                        pressEnterToContinue(scanner);
+                   else if ("Manager".equalsIgnoreCase(role)) {
+                        ManagerMenu managerMenu = new ManagerMenu(username, fullName, role, scanner, passwordStrength);
+                        managerMenu.showMenu();
                     }
+
                     else {
                         System.out.println(RED + ">> Unknown role: " + role + RESET);
                         pressEnterToContinue(scanner);
