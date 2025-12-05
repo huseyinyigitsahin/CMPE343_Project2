@@ -6,10 +6,6 @@ public class SeniorDevMenu extends JuniorDevMenu {
 
     private final Stack<SeniorUndoAction> seniorUndoStack;
 
-    // =========================================================================
-    // CONSTRUCTORS
-    // =========================================================================
-
     public SeniorDevMenu(String username, String fullName, String role, Scanner scanner, String passwordStrength) {
         super(username, fullName, role, scanner, passwordStrength);
         this.seniorUndoStack = new Stack<>();
@@ -18,10 +14,18 @@ public class SeniorDevMenu extends JuniorDevMenu {
     @Override
     public void showMenu() {
         while (true) {
-            System.out.println();
-            System.out.println("=== SENIOR DEVELOPER MENU ===");
-            System.out.println("User : " + fullName);
+            clearScreen();
+            String realFullName = loadRealFullName();
+            System.out.println(CYAN + "=== SENIOR DEVELOPER MENU ===" + RESET);
+            System.out.println("User : " + realFullName + " (" + username + ")");
             System.out.println("Role : " + role);
+            System.out.println();
+
+            if (passwordStrengthAtLogin != null) {
+                printPasswordStrengthBanner();
+                System.out.println();
+            }
+
             System.out.println("1. Change password");
             System.out.println("2. List all contacts");
             System.out.println("3. Search contacts");
@@ -39,7 +43,10 @@ public class SeniorDevMenu extends JuniorDevMenu {
             int choice;
 
             try { choice = Integer.parseInt(input); }
-            catch (Exception e) { System.out.println("Invalid input."); continue; }
+            catch (Exception e) { 
+                System.out.println(RED + "Invalid input." + RESET); 
+                waitForEnter(); continue; 
+            }
 
             try {
                 switch (choice) {
@@ -54,155 +61,57 @@ public class SeniorDevMenu extends JuniorDevMenu {
                     case 9: handleDeleteMultipleContacts(); break;
                     case 10: handleUndoSenior(); break;
                     case 11:
-                        System.out.println("Logging out...");
+                        System.out.println(YELLOW + "Logging out..." + RESET);
                         return;
                     default:
-                        System.out.println("Invalid option.");
+                        System.out.println(RED + "Invalid option." + RESET);
+                        waitForEnter();
                 }
             } catch (Exception e) {
-                System.out.println("Unexpected Error: " + e.getMessage());
+                System.out.println(RED + "Error: " + e.getMessage() + RESET);
+                waitForEnter();
             }
-        }
-    }
-
-    // ============================= UPDATE ===============================
-
-    protected void handleUpdateContact() {
-        System.out.println("\n--- UPDATE CONTACT ---");
-
-        handleListContacts();
-
-        System.out.print("Enter ID of contact to update (or 'q' to cancel): ");
-        String idInput = scanner.nextLine().trim();
-        if (idInput.equalsIgnoreCase("q")) return;
-
-        int contactId;
-        try { contactId = Integer.parseInt(idInput); }
-        catch (Exception e) { System.out.println("Invalid ID."); return; }
-
-        System.out.println("Which field do you want to update?");
-        System.out.println("1. First Name");
-        System.out.println("2. Middle Name");
-        System.out.println("3. Last Name");
-        System.out.println("4. Nickname");
-        System.out.println("5. Primary Phone");
-        System.out.println("6. Secondary Phone");
-        System.out.println("7. Email");
-        System.out.println("8. LinkedIn URL");
-        System.out.print("Select (1-8): ");
-
-        String fieldChoice = scanner.nextLine().trim();
-        String columnName = null;
-        String prompt = "Enter new value: ";
-
-        switch (fieldChoice) {
-            case "1": columnName = "first_name"; break;
-            case "2": columnName = "middle_name"; break;
-            case "3": columnName = "last_name"; break;
-            case "4": columnName = "nickname"; break;
-            case "5": columnName = "phone_primary"; prompt = "Enter new phone (digits only): "; break;
-            case "6": columnName = "phone_secondary"; prompt = "Enter new phone (digits only): "; break;
-            case "7": columnName = "email"; prompt = "Enter new email: "; break;
-            case "8": columnName = "linkedin_url"; break;
-            default:
-                System.out.println("Invalid choice.");
-                return;
-        }
-
-        System.out.print(prompt);
-        String newValue = scanner.nextLine().trim();
-
-        if ((columnName.equals("first_name") || columnName.equals("last_name")
-                || columnName.equals("phone_primary") || columnName.equals("email"))
-                && newValue.isEmpty()) {
-            System.out.println("Error: This field cannot be empty!");
-            return;
-        }
-
-        if (columnName.contains("phone") && !newValue.matches("\\d+")) {
-            System.out.println("Phone must contain only digits.");
-            return;
-        }
-
-        if (columnName.equals("email") && !newValue.contains("@")) {
-            System.out.println("Invalid email format.");
-            return;
-        }
-
-        dB_Connection db = new dB_Connection();
-        try (Connection con = db.connect()) {
-
-            // GET SNAPSHOT BEFORE UPDATE
-            ContactSnapshot backup = getContactSnapshot(con, contactId);
-            if (backup == null) {
-                System.out.println("Contact ID not found.");
-                return;
-            }
-
-            // PERFORM UPDATE
-            String sql = "UPDATE contacts SET " + columnName + "=? WHERE contact_id=?";
-            PreparedStatement pstmt = con.prepareStatement(sql);
-            pstmt.setString(1, newValue);
-            pstmt.setInt(2, contactId);
-
-            if (pstmt.executeUpdate() > 0) {
-                System.out.println("Contact updated successfully!");
-
-                seniorUndoStack.push(new SeniorUndoAction("UPDATE", backup));
-            }
-
-        } catch (Exception e) {
-            System.out.println("SQL Error: " + e.getMessage());
         }
     }
 
     // ============================= ADD ===============================
 
     private void handleAddContact() {
-        System.out.println("\n--- ADD NEW CONTACT ---");
+        clearScreen();
+        System.out.println(CYAN + "=== ADD NEW CONTACT ===" + RESET);
+        System.out.println(YELLOW + "Type 'q' at any prompt to cancel." + RESET);
 
-        System.out.print("First name: ");
-        String first = scanner.nextLine().trim();
-        if (first.isEmpty()) { System.out.println("First name cannot be empty."); return; }
+        String first = promptWithCancel("First name: "); if(first==null) return;
+        if (first.isEmpty()) { System.out.println(RED + "Required!" + RESET); waitForEnter(); return; }
 
-        System.out.print("Middle name (opt): ");
-        String middle = scanner.nextLine().trim();
+        String middle = promptWithCancel("Middle name (opt): "); if(middle==null) return;
 
-        System.out.print("Last name: ");
-        String last = scanner.nextLine().trim();
-        if (last.isEmpty()) { System.out.println("Last name cannot be empty."); return; }
+        String last = promptWithCancel("Last name: "); if(last==null) return;
+        if (last.isEmpty()) { System.out.println(RED + "Required!" + RESET); waitForEnter(); return; }
 
-        System.out.print("Nickname: ");
-        String nick = scanner.nextLine().trim();
+        String nick = promptWithCancel("Nickname: "); if(nick==null) return;
 
-        System.out.print("Primary phone: ");
-        String phone1 = scanner.nextLine().trim();
-        if (!phone1.matches("\\d+")) { System.out.println("Digits only."); return; }
+        String phone1 = promptWithCancel("Primary phone (digits): "); if(phone1==null) return;
+        if (!phone1.matches("\\d+")) { System.out.println(RED + "Digits only!" + RESET); waitForEnter(); return; }
 
-        System.out.print("Secondary phone (opt): ");
-        String phone2 = scanner.nextLine().trim();
-        if (!phone2.isEmpty() && !phone2.matches("\\d+")) {
-            System.out.println("Digits only."); return;
+        String phone2 = promptWithCancel("Secondary phone (opt): "); if(phone2==null) return;
+        
+        String email = promptWithCancel("Email: "); if(email==null) return;
+        if (!email.contains("@")) { System.out.println(RED + "Invalid email!" + RESET); waitForEnter(); return; }
+
+        String linkedin = promptWithCancel("LinkedIn URL (opt): "); if(linkedin==null) return;
+
+        String bday = promptWithCancel("Birth Date (YYYY-MM-DD) (opt): "); if(bday==null) return;
+        if (!bday.isEmpty() && !bday.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            System.out.println(RED + "Invalid date format!" + RESET); waitForEnter(); return;
         }
-
-        System.out.print("Email: ");
-        String email = scanner.nextLine().trim();
-        if (!email.contains("@")) { System.out.println("Invalid email."); return; }
-
-        System.out.print("LinkedIn URL (opt): ");
-        String linkedin = scanner.nextLine().trim();
 
         dB_Connection db = new dB_Connection();
         try (Connection con = db.connect()) {
 
-            String sql = """
-                INSERT INTO contacts 
-                (first_name,middle_name,last_name,nickname,phone_primary,phone_secondary,email,linkedin_url)
-                VALUES (?,?,?,?,?,?,?,?)
-                """;
+            String sql = "INSERT INTO contacts (first_name,middle_name,last_name,nickname,phone_primary,phone_secondary,email,linkedin_url,birth_date) VALUES (?,?,?,?,?,?,?,?,?)";
 
-            PreparedStatement pstmt =
-                    con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
             pstmt.setString(1, first);
             pstmt.setString(2, middle);
@@ -212,126 +121,230 @@ public class SeniorDevMenu extends JuniorDevMenu {
             pstmt.setString(6, phone2);
             pstmt.setString(7, email);
             pstmt.setString(8, linkedin);
+            
+            if (bday.isEmpty()) pstmt.setNull(9, java.sql.Types.DATE);
+            else pstmt.setString(9, bday);
 
             if (pstmt.executeUpdate() > 0) {
                 ResultSet rs = pstmt.getGeneratedKeys();
                 rs.next();
                 int newId = rs.getInt(1);
 
-                System.out.println("Contact added successfully (ID=" + newId + ")");
-
-                seniorUndoStack.push(new SeniorUndoAction("ADD",
-                        new ContactSnapshot(newId)));
+                System.out.println(GREEN + "Contact added successfully (ID=" + newId + ")" + RESET);
+                seniorUndoStack.push(new SeniorUndoAction("ADD", new ContactSnapshot(newId)));
             }
 
         } catch (Exception e) {
-            System.out.println("SQL Error: " + e.getMessage());
+            System.out.println(RED + "SQL Error: " + e.getMessage() + RESET);
         }
+        waitForEnter();
+    }
+
+    private String promptWithCancel(String msg) {
+        System.out.print(msg);
+        String in = scanner.nextLine().trim();
+        if (in.equalsIgnoreCase("q")) return null;
+        return in;
     }
 
     private void handleAddMultipleContacts() {
-        System.out.println("\n--- ADD MULTIPLE CONTACTS ---");
-        System.out.print("How many contacts? ");
+        clearScreen();
+        System.out.println(CYAN + "=== ADD MULTIPLE CONTACTS ===" + RESET);
+        System.out.print("How many contacts? (Max 10): ");
 
         int n;
         try { n = Integer.parseInt(scanner.nextLine().trim()); }
-        catch (Exception e) { System.out.println("Invalid number."); return; }
+        catch (Exception e) { System.out.println(RED + "Invalid number." + RESET); waitForEnter(); return; }
+
+        if (n > 10) { 
+            System.out.println(RED + "Limit is 10 at a time." + RESET); 
+            waitForEnter(); return; 
+        }
 
         for (int i = 1; i <= n; i++) {
-            System.out.println("\nContact #" + i);
-            handleAddContact();
+            System.out.println(YELLOW + "\n--- Contact #" + i + " ---" + RESET);
+            handleAddContact(); 
         }
     }
 
     // ============================= DELETE ===============================
 
     private void handleDeleteContact() {
-        System.out.println("\n--- DELETE CONTACT ---");
-        handleListContacts();
+        while (true) {
+            clearScreen();
+            System.out.println(CYAN + "=== DELETE CONTACT ===" + RESET);
+            
+            handleListContactsForUpdate(); 
 
-        System.out.print("Enter ID to delete: ");
-        int id;
-        try { id = Integer.parseInt(scanner.nextLine().trim()); }
-        catch (Exception e) { System.out.println("Invalid ID."); return; }
+            System.out.println(YELLOW + "Enter 'q' to return to Main Menu." + RESET);
+            System.out.print("Enter ID to delete: ");
+            String in = scanner.nextLine().trim();
+            
+            if (in.equalsIgnoreCase("q")) return;
 
-        deleteSingle(id);
-    }
+            int id;
+            try { 
+                id = Integer.parseInt(in); 
+            } catch (Exception e) { 
+                System.out.println(RED + "Invalid ID." + RESET); 
+                waitForEnter();
+                continue; 
+            }
 
-    private void handleDeleteMultipleContacts() {
-        System.out.println("\n--- DELETE MULTIPLE CONTACTS ---");
-        System.out.print("Enter IDs comma-separated: ");
+            boolean deleteSuccess = deleteSingle(id);
 
-        String[] arr = scanner.nextLine().trim().split(",");
-        for (String s : arr) {
-            try { deleteSingle(Integer.parseInt(s.trim())); }
-            catch (Exception e) { System.out.println("Invalid: " + s); }
+            if (deleteSuccess) {
+                System.out.println();
+                System.out.println(CYAN + "What would you like to do next?" + RESET);
+                System.out.println("1. Delete another contact");
+                System.out.println("2. Undo this deletion immediately");
+                System.out.println("3. Return to Main Menu");
+                System.out.print("Select (1-3): ");
+                
+                String nextAction = scanner.nextLine().trim();
+                
+                if (nextAction.equals("1")) {
+                    continue; 
+                } else if (nextAction.equals("2")) {
+                    handleUndoSenior(); 
+                    continue; 
+                } else {
+                    return; 
+                }
+            } else {
+                waitForEnter();
+            }
         }
     }
 
-    private void deleteSingle(int id) {
+    private void handleDeleteMultipleContacts() {
+        while (true) {
+            clearScreen();
+            System.out.println(CYAN + "=== DELETE MULTIPLE CONTACTS ===" + RESET);
+            
+            handleListContactsForUpdate(); 
+            
+            System.out.println(YELLOW + "Enter 'q' to return to Main Menu." + RESET);
+            System.out.print("Enter IDs comma-separated (e.g. 10,12,15): ");
+            String line = scanner.nextLine().trim();
+            
+            if (line.equalsIgnoreCase("q")) return;
+            if (line.isEmpty()) {
+                System.out.println(RED + "Input cannot be empty." + RESET);
+                waitForEnter();
+                continue;
+            }
+
+            String[] arr = line.split(",");
+            int successCount = 0;
+
+            for (String s : arr) {
+                try { 
+                    int id = Integer.parseInt(s.trim());
+                    boolean deleted = deleteSingle(id);
+                    if (deleted) {
+                        successCount++;
+                    }
+                } catch (Exception e) { 
+                    System.out.println(RED + "Invalid ID skipped: " + s + RESET); 
+                }
+            }
+
+            if (successCount > 0) {
+                System.out.println();
+                System.out.println(GREEN + "Successfully deleted " + successCount + " contacts." + RESET);
+                System.out.println(CYAN + "What would you like to do next?" + RESET);
+                System.out.println("1. Delete more contacts");
+                System.out.println("2. Undo last deletion (Restores the LAST deleted contact)");
+                System.out.println("3. Return to Main Menu");
+                System.out.print("Select (1-3): ");
+                
+                String nextAction = scanner.nextLine().trim();
+                
+                if (nextAction.equals("1")) {
+                    continue; 
+                } else if (nextAction.equals("2")) {
+                    handleUndoSenior(); 
+                    waitForEnter(); 
+                    continue;
+                } else {
+                    return; 
+                }
+            } else {
+                System.out.println(RED + "No contacts were deleted." + RESET);
+                waitForEnter();
+            }
+        }
+    }
+
+    private boolean deleteSingle(int id) {
         dB_Connection db = new dB_Connection();
         try (Connection con = db.connect()) {
 
             ContactSnapshot snap = getContactSnapshot(con, id);
             if (snap == null) {
-                System.out.println("Contact ID not found: " + id);
-                return;
+                System.out.println(RED + "Contact ID not found: " + id + RESET);
+                return false;
             }
 
-            PreparedStatement del =
-                    con.prepareStatement("DELETE FROM contacts WHERE contact_id=?");
+            PreparedStatement del = con.prepareStatement("DELETE FROM contacts WHERE contact_id=?");
             del.setInt(1, id);
 
             if (del.executeUpdate() > 0) {
-                System.out.println("Deleted ID: " + id);
+                System.out.println(GREEN + "Deleted ID: " + id + RESET);
                 seniorUndoStack.push(new SeniorUndoAction("DELETE", snap));
+                return true; 
             }
 
         } catch (Exception e) {
-            System.out.println("Delete error: " + id);
+            System.out.println(RED + "Delete error: " + id + RESET);
         }
+        return false;
     }
 
     // ============================= UNDO ===============================
 
     private void handleUndoSenior() {
-        if (seniorUndoStack.isEmpty()) {
-            System.out.println("Nothing to undo.");
+        clearScreen();
+        System.out.println(CYAN + "=== UNDO LAST ACTION (SENIOR) ===" + RESET);
+
+        if (!seniorUndoStack.isEmpty()) {
+            SeniorUndoAction ua = seniorUndoStack.pop();
+            switch (ua.type) {
+                case "ADD": undoAdd(ua.snap); break;
+                case "DELETE": undoDelete(ua.snap); break;
+                case "UPDATE": undoUpdateSenior(ua.snap); break; 
+            }
+            waitForEnter();
             return;
         }
 
-        SeniorUndoAction ua = seniorUndoStack.pop();
-
-        switch (ua.type) {
-            case "ADD": undoAdd(ua.snap); break;
-            case "DELETE": undoDelete(ua.snap); break;
-            case "UPDATE": undoUpdate(ua.snap); break;
-            default: System.out.println("Unknown undo type.");
+        if (!undoStack.isEmpty()) {
+            super.handleUndo();
+            return;
         }
+
+        System.out.println(YELLOW + "Nothing to undo." + RESET);
+        waitForEnter();
     }
 
     private void undoAdd(ContactSnapshot snap) {
         dB_Connection db = new dB_Connection();
         try (Connection con = db.connect()) {
-            PreparedStatement ps = con.prepareStatement(
-                    "DELETE FROM contacts WHERE contact_id=?");
+            PreparedStatement ps = con.prepareStatement("DELETE FROM contacts WHERE contact_id=?");
             ps.setInt(1, snap.contact_id);
             ps.executeUpdate();
-            System.out.println("Undo ADD ok (deleted ID: " + snap.contact_id + ")");
+            System.out.println(GREEN + "Undo ADD successful. (Deleted ID: " + snap.contact_id + ")" + RESET);
         } catch (Exception e) {
-            System.out.println("Undo ADD failed.");
+            System.out.println(RED + "Undo ADD failed." + RESET);
         }
     }
 
     private void undoDelete(ContactSnapshot snap) {
         dB_Connection db = new dB_Connection();
         try (Connection con = db.connect()) {
-
-            PreparedStatement ps = con.prepareStatement("""
-                INSERT INTO contacts 
-                (contact_id,first_name,middle_name,last_name,nickname,phone_primary,phone_secondary,email,linkedin_url)
-                VALUES (?,?,?,?,?,?,?,?,?)
-            """);
+            String sql = "INSERT INTO contacts (contact_id,first_name,middle_name,last_name,nickname,phone_primary,phone_secondary,email,linkedin_url,birth_date) VALUES (?,?,?,?,?,?,?,?,?,?)";
+            PreparedStatement ps = con.prepareStatement(sql);
 
             ps.setInt(1, snap.contact_id);
             ps.setString(2, snap.first_name);
@@ -342,25 +355,21 @@ public class SeniorDevMenu extends JuniorDevMenu {
             ps.setString(7, snap.phone_secondary);
             ps.setString(8, snap.email);
             ps.setString(9, snap.linkedin_url);
+            ps.setString(10, snap.birth_date); 
 
             ps.executeUpdate();
-            System.out.println("Undo DELETE ok (restored ID: " + snap.contact_id + ")");
+            System.out.println(GREEN + "Undo DELETE successful. (Restored ID: " + snap.contact_id + ")" + RESET);
 
         } catch (Exception e) {
-            System.out.println("Undo DELETE failed.");
+            System.out.println(RED + "Undo DELETE failed: " + e.getMessage() + RESET);
         }
     }
 
-    private void undoUpdate(ContactSnapshot snap) {
+    private void undoUpdateSenior(ContactSnapshot snap) {
         dB_Connection db = new dB_Connection();
         try (Connection con = db.connect()) {
-
-            PreparedStatement ps = con.prepareStatement("""
-                UPDATE contacts SET 
-                first_name=?, middle_name=?, last_name=?, nickname=?,
-                phone_primary=?, phone_secondary=?, email=?, linkedin_url=?
-                WHERE contact_id=?
-            """);
+            String sql = "UPDATE contacts SET first_name=?, middle_name=?, last_name=?, nickname=?, phone_primary=?, phone_secondary=?, email=?, linkedin_url=?, birth_date=? WHERE contact_id=?";
+            PreparedStatement ps = con.prepareStatement(sql);
 
             ps.setString(1, snap.first_name);
             ps.setString(2, snap.middle_name);
@@ -370,13 +379,14 @@ public class SeniorDevMenu extends JuniorDevMenu {
             ps.setString(6, snap.phone_secondary);
             ps.setString(7, snap.email);
             ps.setString(8, snap.linkedin_url);
-            ps.setInt(9, snap.contact_id);
+            ps.setString(9, snap.birth_date);
+            ps.setInt(10, snap.contact_id);
 
             ps.executeUpdate();
-            System.out.println("Undo UPDATE ok (restored ID: " + snap.contact_id + ")");
+            System.out.println(GREEN + "Undo UPDATE successful." + RESET);
 
         } catch (Exception e) {
-            System.out.println("Undo UPDATE failed.");
+            System.out.println(RED + "Undo UPDATE failed." + RESET);
         }
     }
 
@@ -385,7 +395,6 @@ public class SeniorDevMenu extends JuniorDevMenu {
     private ContactSnapshot getContactSnapshot(Connection con, int id) throws Exception {
         PreparedStatement ps = con.prepareStatement("SELECT * FROM contacts WHERE contact_id=?");
         ps.setInt(1, id);
-
         ResultSet rs = ps.executeQuery();
         if (!rs.next()) return null;
 
@@ -398,46 +407,34 @@ public class SeniorDevMenu extends JuniorDevMenu {
                 rs.getString("phone_primary"),
                 rs.getString("phone_secondary"),
                 rs.getString("email"),
-                rs.getString("linkedin_url")
+                rs.getString("linkedin_url"),
+                rs.getString("birth_date")
         );
     }
 
-    // ============================= DATA CLASSES ===============================
+    // ============================= SNAPSHOT CLASS ===============================
 
     private static class ContactSnapshot {
         int contact_id;
-        String first_name;
-        String middle_name;
-        String last_name;
-        String nickname;
-        String phone_primary;
-        String phone_secondary;
-        String email;
-        String linkedin_url;
+        String first_name, middle_name, last_name, nickname;
+        String phone_primary, phone_secondary, email, linkedin_url, birth_date;
 
         ContactSnapshot(int id) { this.contact_id = id; }
 
         ContactSnapshot(int id, String f, String m, String l, String n,
-                        String p1, String p2, String e, String li) {
+                        String p1, String p2, String e, String li, String bd) {
             contact_id = id;
-            first_name = f;
-            middle_name = m;
-            last_name = l;
-            nickname = n;
-            phone_primary = p1;
-            phone_secondary = p2;
-            email = e;
-            linkedin_url = li;
+            first_name = f; middle_name = m; last_name = l; nickname = n;
+            phone_primary = p1; phone_secondary = p2; email = e; linkedin_url = li;
+            birth_date = bd; 
         }
     }
 
     private static class SeniorUndoAction {
-        String type; // ADD, DELETE, UPDATE
+        String type; 
         ContactSnapshot snap;
-
         SeniorUndoAction(String type, ContactSnapshot snap) {
-            this.type = type;
-            this.snap = snap;
+            this.type = type; this.snap = snap;
         }
     }
 }

@@ -7,32 +7,18 @@ import java.util.Stack;
 
 public class JuniorDevMenu extends TesterMenu {
 
-    // Stack to store history for Undo operations
     protected Stack<UndoAction> undoStack;
-
-    // =========================================================================
-    // CONSTRUCTORS
-    // =========================================================================
 
     public JuniorDevMenu(String username, String fullName, String role, Scanner scanner, String passwordStrength) {
         super(username, fullName, role, scanner, passwordStrength);
         this.undoStack = new Stack<>();
     }
 
-    public JuniorDevMenu(String username, String fullName, String role) {
-        super(username, fullName, role, new Scanner(System.in), null);
-        this.undoStack = new Stack<>();
-    }
-
-    // =========================================================================
-    // MENU LOGIC
-    // =========================================================================
-
     @Override
     public void showMenu() {
         while (true) {
             clearScreen();
-            String realFullName = loadRealFullName(); 
+            String realFullName = loadRealFullName();
             
             System.out.println(CYAN + "=== JUNIOR DEVELOPER MENU ===" + RESET);
             System.out.println("User : " + realFullName + " (" + username + ")");
@@ -48,8 +34,8 @@ public class JuniorDevMenu extends TesterMenu {
             System.out.println("2. List all contacts");
             System.out.println("3. Search contacts");
             System.out.println("4. Sort contacts");
-            System.out.println("5. Update existing contact"); // Junior feature
-            System.out.println("6. Undo last update");        // Junior feature
+            System.out.println("5. Update existing contact");
+            System.out.println("6. Undo last update");
             System.out.println("7. Logout");
             System.out.print("Select an option (1-7): ");
 
@@ -66,168 +52,199 @@ public class JuniorDevMenu extends TesterMenu {
 
             try {
                 switch (choice) {
-                    case 1: handleChangePassword(); break; // Inherited
-                    case 2: handleListContacts(); break;   // Inherited
-                    case 3: handleSearchContacts(); break; // Inherited
-                    case 4: handleSortContacts(); break;   // Inherited
-                    case 5: handleUpdateContact(); break;  // Defined below
-                    case 6: handleUndo(); break;           // Defined below
+                    case 1: handleChangePassword(); break;
+                    case 2: handleListContacts(); break;
+                    case 3: handleSearchContacts(); break;
+                    case 4: handleSortContacts(); break;
+                    case 5: handleUpdateContact(); break;
+                    case 6: handleUndo(); break;
                     case 7:
                         System.out.println(YELLOW + "Logging out..." + RESET);
                         return;
                     default:
-                        System.out.println(RED + "Invalid option. Please select 1-7." + RESET);
+                        System.out.println(RED + "Invalid option." + RESET);
                         waitForEnter();
                 }
             } catch (Exception e) {
-                System.out.println(RED + "An unexpected error occurred: " + e.getMessage() + RESET);
+                System.out.println(RED + "Error: " + e.getMessage() + RESET);
                 waitForEnter();
             }
         }
     }
-
-    // =========================================================================
-    // UPDATE CONTACT LOGIC
-    // =========================================================================
 
     protected void handleUpdateContact() {
-        clearScreen();
-        System.out.println(CYAN + "=== UPDATE CONTACT ===" + RESET);
-        System.out.println("Tip: Use 'List all contacts' (Option 2) to find IDs.");
-        System.out.println();
+        while (true) {
+            clearScreen();
+            System.out.println(CYAN + "=== UPDATE CONTACT ===" + RESET);
+            
+            handleListContactsForUpdate(); 
 
-        System.out.print("Enter ID of contact to update (or 'q' to cancel): ");
-        String idInput = scanner.nextLine().trim();
-        
-        if (idInput.equalsIgnoreCase("q")) return;
+            System.out.println(YELLOW + "Enter 'q' to return to Main Menu." + RESET);
+            System.out.print("Enter ID of contact to update: ");
+            String idInput = scanner.nextLine().trim();
+            
+            if (idInput.equalsIgnoreCase("q")) return;
 
-        int contactId;
-        try {
-            contactId = Integer.parseInt(idInput);
-        } catch (NumberFormatException e) {
-            System.out.println(RED + "Invalid ID format." + RESET);
-            waitForEnter();
-            return;
-        }
-
-        System.out.println();
-        System.out.println("Which field do you want to update?");
-        System.out.println("1. First Name");
-        System.out.println("2. Middle Name");
-        System.out.println("3. Last Name");
-        System.out.println("4. Nickname");
-        System.out.println("5. Primary Phone");
-        System.out.println("6. Secondary Phone");
-        System.out.println("7. Email");
-        System.out.println("8. LinkedIn URL");
-        System.out.print("Select (1-8): ");
-        String fieldChoice = scanner.nextLine().trim();
-
-        String columnName = "";
-        String prompt = "Enter new value: ";
-
-        switch (fieldChoice) {
-            case "1": columnName = "first_name"; break;
-            case "2": columnName = "middle_name"; break;
-            case "3": columnName = "last_name"; break;
-            case "4": columnName = "nickname"; break;
-            case "5": columnName = "phone_primary"; prompt = "Enter new Phone (digits only): "; break;
-            case "6": columnName = "phone_secondary"; prompt = "Enter new Phone (digits only): "; break;
-            case "7": columnName = "email"; prompt = "Enter new Email: "; break;
-            case "8": columnName = "linkedin_url"; break;
-            default:
-                System.out.println(RED + "Invalid selection." + RESET);
+            int contactId;
+            try {
+                contactId = Integer.parseInt(idInput);
+            } catch (NumberFormatException e) {
+                System.out.println(RED + "Invalid ID format." + RESET);
                 waitForEnter();
-                return;
-        }
+                continue;
+            }
 
-        System.out.print(prompt);
-        String newValue = scanner.nextLine().trim();
+            if (contactId <= 0) {
+                System.out.println(RED + "ID must be positive." + RESET);
+                waitForEnter();
+                continue;
+            }
 
-        // --- VALIDATION ---
-        
-        // 1. Mandatory Fields Check
-        if ((columnName.equals("first_name") || columnName.equals("last_name") || 
-             columnName.equals("phone_primary") || columnName.equals("email")) && newValue.isEmpty()) {
-            System.out.println(RED + "Error: This field cannot be empty!" + RESET);
-            waitForEnter();
-            return;
-        }
+            System.out.println();
+            System.out.println("Which field do you want to update?");
+            System.out.println("1. First Name");
+            System.out.println("2. Middle Name");
+            System.out.println("3. Last Name");
+            System.out.println("4. Nickname");
+            System.out.println("5. Primary Phone");
+            System.out.println("6. Secondary Phone");
+            System.out.println("7. Email");
+            System.out.println("8. LinkedIn URL");
+            System.out.println("9. Birth Date");
+            System.out.print("Select (1-9): ");
+            String fieldChoice = scanner.nextLine().trim();
 
-        // 2. Numeric Check for Phones
-        if (columnName.contains("phone") && !newValue.isEmpty() && !newValue.matches("\\d+")) {
-            System.out.println(RED + "Error: Phone number must contain only digits!" + RESET);
-            waitForEnter();
-            return;
-        }
+            String columnName = "";
+            String prompt = "Enter new value: ";
 
-        // 3. Email Format Check
-        if (columnName.equals("email") && !newValue.contains("@")) {
-            System.out.println(RED + "Error: Invalid email format! (Must contain '@')" + RESET);
-            waitForEnter();
-            return;
-        }
+            switch (fieldChoice) {
+                case "1": columnName = "first_name"; break;
+                case "2": columnName = "middle_name"; break;
+                case "3": columnName = "last_name"; break;
+                case "4": columnName = "nickname"; break;
+                case "5": columnName = "phone_primary"; prompt = "Enter new Phone (digits only): "; break;
+                case "6": columnName = "phone_secondary"; prompt = "Enter new Phone (digits only): "; break;
+                case "7": columnName = "email"; prompt = "Enter new Email: "; break;
+                case "8": columnName = "linkedin_url"; break;
+                case "9": columnName = "birth_date"; prompt = "Enter Birth Date (YYYY-MM-DD): "; break;
+                default:
+                    System.out.println(RED + "Invalid selection." + RESET);
+                    waitForEnter();
+                    continue;
+            }
 
-        // --- DATABASE OPERATION ---
+            System.out.print(prompt);
+            String newValue = scanner.nextLine().trim();
 
-        Connection con = getConnection();
-        if (con == null) {
-            System.out.println(RED + "Connection failed. Cannot update." + RESET);
-            waitForEnter();
-            return;
-        }
+            if ((columnName.equals("first_name") || columnName.equals("last_name") || 
+                 columnName.equals("phone_primary") || columnName.equals("email")) && newValue.isEmpty()) {
+                System.out.println(RED + "Error: This field cannot be empty!" + RESET);
+                waitForEnter();
+                continue;
+            }
 
-        try {
-            // STEP A: Fetch the OLD value (for Undo)
-            String selectSql = "SELECT " + columnName + " FROM contacts WHERE contact_id = ?";
-            String oldValue = "";
-            boolean idExists = false;
+            if (columnName.contains("phone") && !newValue.isEmpty() && !newValue.matches("\\d+")) {
+                System.out.println(RED + "Error: Phone number must contain only digits!" + RESET);
+                waitForEnter();
+                continue;
+            }
 
-            try (PreparedStatement selectStmt = con.prepareStatement(selectSql)) {
-                selectStmt.setInt(1, contactId);
-                ResultSet rs = selectStmt.executeQuery();
-                if (rs.next()) {
-                    oldValue = rs.getString(columnName);
-                    if (oldValue == null) oldValue = ""; 
-                    idExists = true;
+            if (columnName.equals("email") && !newValue.contains("@")) {
+                System.out.println(RED + "Error: Invalid email format! (Must contain '@')" + RESET);
+                waitForEnter();
+                continue;
+            }
+            
+            if (columnName.equals("birth_date") && !newValue.isEmpty()) {
+                if (!newValue.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                    System.out.println(RED + "Error: Invalid date format! Use YYYY-MM-DD." + RESET);
+                    waitForEnter();
+                    continue;
                 }
             }
 
-            if (!idExists) {
-                System.out.println(RED + "Contact ID not found." + RESET);
-                waitForEnter();
+            Connection con = getConnection();
+            if (con == null) {
+                System.out.println(RED + "Connection failed." + RESET);
                 return;
             }
 
-            // STEP B: Update to NEW value
-            String updateSql = "UPDATE contacts SET " + columnName + " = ? WHERE contact_id = ?";
-            try (PreparedStatement updateStmt = con.prepareStatement(updateSql)) {
-                updateStmt.setString(1, newValue);
-                updateStmt.setInt(2, contactId);
+            boolean updateSuccess = false;
 
-                int rows = updateStmt.executeUpdate();
-                if (rows > 0) {
-                    System.out.println(GREEN + "Contact updated successfully!" + RESET);
+            try {
+                String selectSql = "SELECT " + columnName + " FROM contacts WHERE contact_id = ?";
+                String oldValue = "";
+                boolean idExists = false;
+
+                try (PreparedStatement selectStmt = con.prepareStatement(selectSql)) {
+                    selectStmt.setInt(1, contactId);
+                    ResultSet rs = selectStmt.executeQuery();
+                    if (rs.next()) {
+                        oldValue = rs.getString(columnName);
+                        if (oldValue == null) oldValue = ""; 
+                        idExists = true;
+                    }
+                }
+
+                if (!idExists) {
+                    System.out.println(RED + "Contact ID not found." + RESET);
+                    waitForEnter();
+                    continue;
+                }
+
+                String updateSql = "UPDATE contacts SET " + columnName + " = ? WHERE contact_id = ?";
+                try (PreparedStatement updateStmt = con.prepareStatement(updateSql)) {
+                    if (newValue.isEmpty() && columnName.equals("birth_date")) {
+                         updateStmt.setNull(1, java.sql.Types.DATE);
+                    } else {
+                         updateStmt.setString(1, newValue);
+                    }
                     
-                    // Push to Undo Stack
-                    undoStack.push(new UndoAction(contactId, columnName, oldValue));
+                    updateStmt.setInt(2, contactId);
+
+                    int rows = updateStmt.executeUpdate();
+                    if (rows > 0) {
+                        System.out.println(GREEN + "Contact updated successfully!" + RESET);
+                        undoStack.push(new UndoAction(contactId, columnName, oldValue));
+                        
+                        System.out.println("Updated Row:");
+                        printSingleContact(con, contactId);
+                        
+                        updateSuccess = true;
+                    } else {
+                        System.out.println(RED + "Update failed." + RESET);
+                        waitForEnter();
+                    }
+                }
+
+            } catch (SQLException e) {
+                System.out.println(RED + "SQL Error: " + e.getMessage() + RESET);
+                waitForEnter();
+            } finally {
+                try { con.close(); } catch (SQLException ignored) {}
+            }
+            
+            if (updateSuccess) {
+                System.out.println();
+                System.out.println(CYAN + "What would you like to do next?" + RESET);
+                System.out.println("1. Update another contact");
+                System.out.println("2. Undo this update immediately");
+                System.out.println("3. Return to Main Menu");
+                System.out.print("Select (1-3): ");
+                
+                String nextAction = scanner.nextLine().trim();
+                
+                if (nextAction.equals("1")) {
+                    continue; 
+                } else if (nextAction.equals("2")) {
+                    handleUndo(); 
+                    continue; 
                 } else {
-                    System.out.println(RED + "Update failed." + RESET);
+                    return; 
                 }
             }
-
-        } catch (SQLException e) {
-            System.out.println(RED + "SQL Error: " + e.getMessage() + RESET);
-        } finally {
-            try { con.close(); } catch (SQLException ignored) {}
         }
-        
-        waitForEnter();
     }
-
-    // =========================================================================
-    // UNDO LOGIC
-    // =========================================================================
 
     protected void handleUndo() {
         clearScreen();
@@ -243,8 +260,8 @@ public class JuniorDevMenu extends TesterMenu {
         
         Connection con = getConnection();
         if (con == null) {
-            System.out.println(RED + "Connection failed. Cannot undo." + RESET);
-            undoStack.push(lastAction); // Put it back since we failed
+            System.out.println(RED + "Connection failed." + RESET);
+            undoStack.push(lastAction);
             waitForEnter();
             return;
         }
@@ -252,16 +269,24 @@ public class JuniorDevMenu extends TesterMenu {
         String sql = "UPDATE contacts SET " + lastAction.columnName + " = ? WHERE contact_id = ?";
         
         try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-            pstmt.setString(1, lastAction.oldValue);
+            if (lastAction.oldValue == null || lastAction.oldValue.isEmpty()) {
+                 if (lastAction.columnName.equals("birth_date")) {
+                     pstmt.setNull(1, java.sql.Types.DATE);
+                 } else {
+                     pstmt.setString(1, "");
+                 }
+            } else {
+                pstmt.setString(1, lastAction.oldValue);
+            }
+            
             pstmt.setInt(2, lastAction.contactId);
             
             int rows = pstmt.executeUpdate();
             if (rows > 0) {
                 System.out.println(GREEN + "Undo successful!" + RESET);
                 System.out.println("Reverted field '" + lastAction.columnName + "' for ID " + lastAction.contactId);
-                System.out.println("Value restored to: " + (lastAction.oldValue.isEmpty() ? "[EMPTY]" : lastAction.oldValue));
             } else {
-                System.out.println(RED + "Could not undo. The contact might have been deleted." + RESET);
+                System.out.println(RED + "Could not undo. Contact might have been deleted." + RESET);
             }
         } catch (SQLException e) {
             System.out.println(RED + "Undo Error: " + e.getMessage() + RESET);
@@ -272,9 +297,29 @@ public class JuniorDevMenu extends TesterMenu {
         waitForEnter();
     }
 
-    // =========================================================================
-    // HELPER CLASS
-    // =========================================================================
+    protected void handleListContactsForUpdate() {
+        Connection con = getConnection();
+        if (con == null) return;
+        try (PreparedStatement stmt = con.prepareStatement("SELECT * FROM contacts");
+             ResultSet rs = stmt.executeQuery()) {
+            printContactHeader();
+            while (rs.next()) {
+                printContactRow(rs);
+            }
+        } catch (Exception ignored) {}
+        finally { try { con.close(); } catch (Exception ignored) {} }
+    }
+
+    protected void printSingleContact(Connection con, int id) {
+        try (PreparedStatement stmt = con.prepareStatement("SELECT * FROM contacts WHERE contact_id = ?")) {
+            stmt.setInt(1, id);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                printContactHeader();
+                printContactRow(rs);
+            }
+        } catch (Exception ignored) {}
+    }
 
     protected class UndoAction {
         int contactId;
