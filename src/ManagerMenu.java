@@ -128,6 +128,21 @@ public class ManagerMenu extends TesterMenu {
         if (pause) waitForEnter();
     }
 
+    // ------------- RETRY HELPER (Madde 12 için) -------------
+    private boolean askRetry() {
+        while (true) {
+            System.out.print("Would you like to try again? (Y/N): ");
+            String ans = scanner.nextLine().trim().toLowerCase();
+            if (ans.equals("y") || ans.equals("yes")) {
+                return true;
+            } else if (ans.equals("n") || ans.equals("no")) {
+                return false;
+            } else {
+                System.out.println(YELLOW + "Please enter Y or N." + RESET);
+            }
+        }
+    }
+
     private void handleAddUser() {
         clearScreen();
         System.out.println(CYAN + "=== ADD NEW USER ===" + RESET);
@@ -259,7 +274,6 @@ public class ManagerMenu extends TesterMenu {
 
         waitForEnter();
     }
-
     private void handleUpdateUser() {
         while (true) {
             clearScreen();
@@ -278,17 +292,23 @@ public class ManagerMenu extends TesterMenu {
                 if (userId <= 0) throw new NumberFormatException();
             } catch (NumberFormatException e) {
                 System.out.println(RED + "Invalid ID format. Please enter a number." + RESET);
-                waitForEnter();
-                continue;
+                if (askRetry()) {
+                    continue;
+                } else {
+                    return;
+                }
             }
 
             Connection con = getConnection();
             if (con == null) {
                 System.out.println(RED + "Database connection failed." + RESET);
-                return;
+                if (askRetry()) {
+                    continue;
+                } else {
+                    return;
+                }
             }
 
-            // Fetch password_hash too for full backup
             String selectSql = "SELECT username, name, surname, role, password_hash FROM users WHERE user_id = ?";
 
             String currentUsername = null;
@@ -302,8 +322,11 @@ public class ManagerMenu extends TesterMenu {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (!rs.next()) {
                         System.out.println(RED + "User ID not found." + RESET);
-                        waitForEnter();
-                        continue;
+                        if (askRetry()) {
+                            continue;
+                        } else {
+                            return;
+                        }
                     }
                     currentUsername = rs.getString("username");
                     currentName = rs.getString("name");
@@ -324,34 +347,46 @@ public class ManagerMenu extends TesterMenu {
                 System.out.println();
 
                 System.out.print("New username (leave blank to keep '" + currentUsername + "'): ");
-                String newUsername = scanner.nextLine().trim();
-                if (newUsername.isEmpty()) {
-                    newUsername = currentUsername;
-                } else if (newUsername.length() > MAX_USERNAME_LEN) {
-                    System.out.println(RED + "Username is too long." + RESET);
-                    waitForEnter();
-                    return;
-                }
+String newUsername = scanner.nextLine().trim();
+if (newUsername.isEmpty()) {
+    newUsername = currentUsername;
+} else if (newUsername.length() > MAX_USERNAME_LEN) {
+    System.out.println(RED + "Username is too long." + RESET);
+    if (askRetry()) {
+        continue;   // while(true) başına dön, kullanıcıyı yeniden seçsin
+    } else {
+        return;     // ana menüye dön
+    }
+}
+
 
                 System.out.print("New name (leave blank to keep '" + currentName + "'): ");
-                String newName = scanner.nextLine().trim();
-                if (newName.isEmpty()) {
-                    newName = currentName;
-                } else if (newName.length() > MAX_NAME_LEN) {
-                    System.out.println(RED + "Name is too long." + RESET);
-                    waitForEnter();
-                    return;
-                }
+String newName = scanner.nextLine().trim();
+if (newName.isEmpty()) {
+    newName = currentName;
+} else if (newName.length() > MAX_NAME_LEN) {
+    System.out.println(RED + "Name is too long." + RESET);
+    if (askRetry()) {
+        continue;
+    } else {
+        return;
+    }
+}
+
 
                 System.out.print("New surname (leave blank to keep '" + currentSurname + "'): ");
-                String newSurname = scanner.nextLine().trim();
-                if (newSurname.isEmpty()) {
-                    newSurname = currentSurname;
-                } else if (newSurname.length() > MAX_SURNAME_LEN) {
-                    System.out.println(RED + "Surname is too long." + RESET);
-                    waitForEnter();
-                    return;
-                }
+String newSurname = scanner.nextLine().trim();
+if (newSurname.isEmpty()) {
+    newSurname = currentSurname;
+} else if (newSurname.length() > MAX_SURNAME_LEN) {
+    System.out.println(RED + "Surname is too long." + RESET);
+    if (askRetry()) {
+        continue;
+    } else {
+        return;
+    }
+}
+
 
                 System.out.println("Current role: " + currentRole);
                 System.out.print("Change role? (y/n): ");
@@ -379,7 +414,6 @@ public class ManagerMenu extends TesterMenu {
                         System.out.println(GREEN + "User updated successfully." + RESET);
                         updateSuccess = true;
                         
-                        // Push old state to stack with type UPDATE
                         undoUserStack.push(new UserSnapshot("UPDATE", userId, currentUsername, currentHash, currentName, currentSurname, currentRole));
                     } else {
                         System.out.println(YELLOW + "No changes applied." + RESET);
@@ -469,7 +503,6 @@ public class ManagerMenu extends TesterMenu {
             System.out.println(RED + "Error: " + e.getMessage() + RESET);
         }
     }
-
     private void handleDeleteUser() {
         while (true) {
             clearScreen();
@@ -488,40 +521,52 @@ public class ManagerMenu extends TesterMenu {
                 if (userId <= 0) throw new NumberFormatException();
             } catch (NumberFormatException e) {
                 System.out.println(RED + "Invalid ID format. Please enter a number." + RESET);
-                waitForEnter();
-                continue;
+                if (askRetry()) {
+                    continue;
+                } else {
+                    return;
+                }
             }
 
             Connection con = getConnection();
             if (con == null) {
                 System.out.println(RED + "Database connection failed." + RESET);
-                return;
+                if (askRetry()) {
+                    continue;
+                } else {
+                    return;
+                }
             }
 
             UserSnapshot backup = null;
             boolean deleteSuccess = false;
 
             try {
-                // 1. GET SNAPSHOT BEFORE DELETE
                 String selectSql = "SELECT * FROM users WHERE user_id = ?";
                 try (PreparedStatement ps = con.prepareStatement(selectSql)) {
                     ps.setInt(1, userId);
                     try (ResultSet rs = ps.executeQuery()) {
                         if (!rs.next()) {
                             System.out.println(RED + "User ID not found." + RESET);
-                            waitForEnter();
-                            continue;
+                            if (askRetry()) {
+                                continue;
+                            } else {
+                                return;
+                            }
                         }
 
                         String uname = rs.getString("username");
-                        if (uname.equals(username)) {
+                        if (uname != null && uname.equals(username)) {
                             System.out.println(RED + "You cannot delete yourself." + RESET);
-                            waitForEnter();
-                            continue;
+                            if (askRetry()) {
+                                continue;
+                            } else {
+                                return;
+                            }
                         }
 
                         backup = new UserSnapshot(
-                            "DELETE", // Action type
+                            "DELETE",
                             rs.getInt("user_id"),
                             rs.getString("username"),
                             rs.getString("password_hash"),
@@ -541,7 +586,6 @@ public class ManagerMenu extends TesterMenu {
                     }
                 }
 
-                // 2. DELETE
                 String deleteSql = "DELETE FROM users WHERE user_id = ?";
                 try (PreparedStatement delPs = con.prepareStatement(deleteSql)) {
                     delPs.setInt(1, userId);
@@ -604,7 +648,6 @@ public class ManagerMenu extends TesterMenu {
 
         try {
             if ("DELETE".equals(snap.actionType)) {
-                // Undo a DELETE -> INSERT back
                 String sql = "INSERT INTO users (user_id, username, password_hash, name, surname, role) VALUES (?,?,?,?,?,?)";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setInt(1, snap.user_id);
@@ -617,7 +660,6 @@ public class ManagerMenu extends TesterMenu {
                     System.out.println(GREEN + "Undo successful. User '" + snap.username + "' restored." + RESET);
                 }
             } else if ("UPDATE".equals(snap.actionType)) {
-                // Undo an UPDATE -> UPDATE back to old values
                 String sql = "UPDATE users SET username=?, password_hash=?, name=?, surname=?, role=? WHERE user_id=?";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setString(1, snap.username);
