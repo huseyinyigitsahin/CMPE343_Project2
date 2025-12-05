@@ -240,11 +240,10 @@ public class SeniorDevMenu extends JuniorDevMenu {
                         break;
                     }
 
-                    // ================== STEP 1: MIDDLE NAME (REQUIRED) ==================
+                    // ================== STEP 1: MIDDLE NAME (OPTIONAL) ==================
                     case 1: {
                         System.out.println();
-                        System.out.println(CYAN + "Middle Name (required)" + RESET);
-                        System.out.println(YELLOW + "Rules:" + RESET + " same as first name. Cannot be empty." );
+                        System.out.println(CYAN + "Middle Name (optional)" + RESET);
                         System.out.print("Middle name (b = back, q = cancel): ");
                         String tmp = readLimitedLine();
                         if (tmp == null) {
@@ -262,7 +261,8 @@ public class SeniorDevMenu extends JuniorDevMenu {
                         }
 
                         if (tmp.isEmpty()) {
-                            System.out.println(RED + "Middle name is required." + RESET);
+                            middleRaw = "";
+                            step++;
                             break;
                         }
 
@@ -272,6 +272,10 @@ public class SeniorDevMenu extends JuniorDevMenu {
                             break;
                         }
 
+                        if (tmp.equalsIgnoreCase(firstRaw)) {
+                            System.out.println(RED + "Middle name cannot be the same as first name." + RESET);
+                            break;
+                            }
                         step++;
                         break;
                     }
@@ -315,10 +319,10 @@ public class SeniorDevMenu extends JuniorDevMenu {
                         break;
                     }
 
-                    // ================== STEP 3: NICKNAME (REQUIRED) ==================
+                    // ================== STEP 3: NICKNAME (optional) ==================
                     case 3: {
                         System.out.println();
-                        System.out.println(CYAN + "Nickname (required) format:" + RESET + " ali_k, user.123");
+                        System.out.println(CYAN + "Nickname (optional) format:" + RESET + " ali_k, user.123");
                         System.out.println(YELLOW + "Rules:" + RESET + " letters, digits, underscore and dot are allowed. No spaces.");
                         System.out.print("Nickname (b = back, q = cancel): ");
                         String tmp = readLimitedLine();
@@ -337,16 +341,17 @@ public class SeniorDevMenu extends JuniorDevMenu {
                         }
 
                         if (tmp.isEmpty()) {
-                            System.out.println(RED + "Nickname is required." + RESET);
+                            nick = "";
+                            step++;
                             break;
                         }
 
-                        nick = tmp;
-                        if (!isValidNickname(nick)) {
+                        if (!isValidNickname(tmp)) {
                             System.out.println(RED + "Invalid nickname format." + RESET);
                             break;
                         }
 
+                        nick = tmp;
                         step++;
                         break;
                     }
@@ -391,11 +396,10 @@ public class SeniorDevMenu extends JuniorDevMenu {
                         break;
                     }
 
-                    // ================== STEP 5: SECONDARY PHONE (REQUIRED) ==================
+                    // ================== STEP 5: SECONDARY PHONE (OPTIONAL) ==================
                     case 5: {
                         System.out.println();
-                        System.out.println(CYAN + "Secondary Phone (required)" + RESET);
-                        System.out.println(YELLOW + "Rules:" + RESET + " must be a 10-digit number like 5321112233 (digits only).");
+                        System.out.println(CYAN + "Secondary Phone (optional)" + RESET);
                         System.out.print("Secondary phone (b = back, q = cancel): ");
                         String raw = readLimitedLine();
                         if (raw == null) {
@@ -413,7 +417,8 @@ public class SeniorDevMenu extends JuniorDevMenu {
                         }
 
                         if (raw.isEmpty()) {
-                            System.out.println(RED + "Secondary phone is required." + RESET);
+                            phone2 = "";
+                            step++;
                             break;
                         }
 
@@ -426,15 +431,20 @@ public class SeniorDevMenu extends JuniorDevMenu {
                             break;
                         }
 
+                        if (raw.equals(phone1)) {
+                            System.out.println(RED + "Secondary phone cannot be the same as primary phone." + RESET);
+                            break;
+                        }
+                        
                         phone2 = raw;
                         step++;
                         break;
                     }
 
-                    // ================== STEP 6: EMAIL (OPTIONAL, DOMAIN KURALLI) ==================
+                    // ================== STEP 6: EMAIL (Required) ==================
                     case 6: {
                         System.out.println();
-                        System.out.println(CYAN + "Email (optional)" + RESET);
+                        System.out.println(CYAN + "Email (required)" + RESET);
                         System.out.println("Supported providers: gmail.com, outlook.com, hotmail.com, yahoo.com");
                         System.out.println(YELLOW + "Rules:" + RESET + " if you enter email, it must be valid and from a supported provider. No spaces.");
                         System.out.println(YELLOW + "Forbidden characters:" + RESET + " ! ? % ^ & * ( ) = + { } [ ] | ' \" < > ,");
@@ -456,11 +466,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
 
                         if (tmp.isEmpty()) {
                             email = "";
-                            System.out.println(YELLOW +
-                                "You left email empty. If this person starts using a supported email provider later," +
-                                " you can add it from the update menu."
-                                + RESET);
-                            step++;
+                            System.out.println(RED + "Email is required" + RESET);
                             break;
                         }
 
@@ -480,10 +486,10 @@ public class SeniorDevMenu extends JuniorDevMenu {
                         break;
                     }
 
-                    // ================== STEP 7: LINKEDIN (REQUIRED) ==================
+                    // ================== STEP 7: LINKEDIN (optional) ==================
                     case 7: {
                         System.out.println();
-                        System.out.println(CYAN + "LinkedIn URL (required)" + RESET);
+                        System.out.println(CYAN + "LinkedIn URL (optional)" + RESET);
                         System.out.println(YELLOW + "Example:" + RESET + " https://www.linkedin.com/in/username");
                         System.out.print("LinkedIn URL (b = back, q = cancel): ");
                         String tmp = readLimitedLine();
@@ -502,7 +508,8 @@ public class SeniorDevMenu extends JuniorDevMenu {
                         }
 
                         if (tmp.isEmpty()) {
-                            System.out.println(RED + "LinkedIn URL is required." + RESET);
+                            phone2 = "";
+                            step++;
                             break;
                         }
 
