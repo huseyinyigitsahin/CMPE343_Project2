@@ -11,14 +11,6 @@ public class AppMain {
 
     private static final int MAX_ATTEMPTS = 10;
 
-    public static final String RESET = "\u001B[0m";
-    public static final String CYAN = "\u001B[36m";
-    public static final String BLUE = "\u001B[34m";
-    public static final String YELLOW = "\u001B[33m";
-    public static final String GREEN = "\u001B[32m";
-    public static final String RED = "\u001B[31m";
-    public static final String WHITE_BOLD = "\u001B[1;37m";
-
     public static void main(String[] args) {
 
         try {
@@ -27,50 +19,57 @@ public class AppMain {
         }
 
         Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8);
-        
-        displayWelcomeMessage();
+
+        // 1) CMPE343 splash + "Press ENTER to continue"
+        LoginScreen.showInitialSplash(scanner);
+
+        // 2) Full-screen loading bar (only on login flow)
+        LoginScreen.showPreLoginLoadingBar();
 
         int attempts = 0;
 
         while (attempts < MAX_ATTEMPTS) {
             try {
-                clearScreen();
+                // 3) Contact Management + Login Form
+                LoginScreen.printLoginFormHeader();
 
-                printLoginHeader();
-
-                System.out.print(CYAN + "|  " + YELLOW + "Username : " + RESET);
-                
+                System.out.print(LoginScreen.CYAN + "|  " + LoginScreen.YELLOW + "Username : " + LoginScreen.RESET);
                 String username = null;
                 if (scanner.hasNextLine()) {
                     username = scanner.nextLine().trim();
                 }
 
                 if (username != null && username.equalsIgnoreCase("q")) {
-                    printShutdownAscii(); 
+                    printShutdownAscii();
                     scanner.close();
                     return;
                 }
 
                 if (username == null || username.isBlank()) {
-                    printError("Username cannot be empty.");
+                    System.out.println();
+                    System.out.println(LoginScreen.RED + ">> Username cannot be empty." + LoginScreen.RESET);
+                    System.out.println(LoginScreen.YELLOW + "Press ENTER to try again..." + LoginScreen.RESET);
+                    scanner.nextLine();
                     attempts++;
-                    pressEnterToContinue(scanner);
                     continue;
                 }
 
-                System.out.print(CYAN + "|  " + YELLOW + "Password : " + RESET);
+                System.out.print(LoginScreen.CYAN + "|  " + LoginScreen.YELLOW + "Password : " + LoginScreen.RESET);
                 String password = "";
                 if (scanner.hasNextLine()) {
                     password = scanner.nextLine();
                 }
 
-                printLoginFooter(); 
+                LoginScreen.printLoginFooter();
 
                 boolean success = LoginScreen.authenticate(username, password);
 
                 if (success) {
+                    // 5) Correct password: full-screen loading bar again
+                    LoginScreen.showPostLoginLoadingBar();
+
                     String fullName = username;
-                    String role = "Tester"; 
+                    String role = "Tester";
                     String passwordStrength = LoginScreen.getLastPasswordStrengthAtLogin();
 
                     dB_Connection db = new dB_Connection();
@@ -93,46 +92,77 @@ public class AppMain {
                         } catch (SQLException e) {
                             System.out.println(">> Error loading user profile.");
                         } finally {
-                            try { con.close(); } catch (SQLException ignored) {}
+                            try {
+                                con.close();
+                            } catch (SQLException ignored) {
+                            }
                         }
                     }
 
-                    if ("Tester".equalsIgnoreCase(role)) {
-                        TesterMenu testerMenu = new TesterMenu(username, fullName, role, scanner, passwordStrength);
-                        testerMenu.showMenu();
-                    } 
-                    else if ("Junior Developer".equalsIgnoreCase(role)) {
-                        JuniorDevMenu juniorMenu = new JuniorDevMenu(username, fullName, role, scanner, passwordStrength);
-                        juniorMenu.showMenu();
-                    } 
-                    else if ("Senior Developer".equalsIgnoreCase(role)) {
-                        SeniorDevMenu seniorMenu = new SeniorDevMenu(username, fullName, role, scanner, passwordStrength);
-                        seniorMenu.showMenu();
-                    } 
-                   else if ("Manager".equalsIgnoreCase(role)) {
-                        ManagerMenu managerMenu = new ManagerMenu(username, fullName, role, scanner, passwordStrength);
-                        managerMenu.showMenu();
+                    // Small welcome message before menu
+                    System.out.println(LoginScreen.GREEN + "Login successful." + LoginScreen.RESET);
+                    System.out.println("Welcome, " + fullName + " (" + role + ")");
+                    try {
+                        Thread.sleep(1500);
+                    } catch (InterruptedException ignored) {
                     }
 
-                    else {
-                        System.out.println(RED + ">> Unknown role: " + role + RESET);
-                        pressEnterToContinue(scanner);
+                    // Role-based menus
+                    if ("Tester".equalsIgnoreCase(role)) {
+                        TesterMenu testerMenu =
+                                new TesterMenu(username, fullName, role, scanner, passwordStrength);
+                        testerMenu.showMenu();
+                    } else if ("Junior Developer".equalsIgnoreCase(role)) {
+                        JuniorDevMenu juniorMenu =
+                                new JuniorDevMenu(username, fullName, role, scanner, passwordStrength);
+                        juniorMenu.showMenu();
+                    } else if ("Senior Developer".equalsIgnoreCase(role)) {
+                        SeniorDevMenu seniorMenu =
+                                new SeniorDevMenu(username, fullName, role, scanner, passwordStrength);
+                        seniorMenu.showMenu();
+                    } else if ("Manager".equalsIgnoreCase(role)) {
+                        ManagerMenu managerMenu =
+                                new ManagerMenu(username, fullName, role, scanner, passwordStrength);
+                        managerMenu.showMenu();
+                    } else {
+                        System.out.println(LoginScreen.RED + ">> Unknown role: " + role + LoginScreen.RESET);
+                        System.out.println(LoginScreen.YELLOW + "Press ENTER to go back to login..." + LoginScreen.RESET);
+                        scanner.nextLine();
                     }
-                    
-                    System.out.println(GREEN + "\nLogged out successfully. Returning to login screen..." + RESET);
-                    try { Thread.sleep(1500); } catch (Exception e) {}
-                    attempts = 0; 
-                
+
+                    System.out.println(LoginScreen.GREEN +
+                            "\nLogged out successfully. Returning to login screen..." +
+                            LoginScreen.RESET);
+                    try {
+                        Thread.sleep(1500);
+                    } catch (InterruptedException ignored) {
+                    }
+                    attempts = 0; // after logout, login again
+
                 } else {
                     attempts++;
                     if (attempts >= MAX_ATTEMPTS) {
-                        System.out.println(RED + ">> SYSTEM LOCKED: Too many failed attempts." + RESET);
+                        System.out.println(LoginScreen.RED +
+                                ">> SYSTEM LOCKED: Too many failed attempts." +
+                                LoginScreen.RESET);
                         break;
                     }
+
+                    // Wrong password: show error & ask if they want to try again or quit
+                    LoginScreen.showLoginErrorPrompt("Incorrect username or password.");
+                    String resp = scanner.nextLine().trim();
+                    if (resp.equalsIgnoreCase("q")) {
+                        printShutdownAscii();
+                        scanner.close();
+                        return;
+                    }
+                    // ENTER or anything else → loop continues, show login screen again
                 }
 
             } catch (Exception e) {
-                System.out.println(RED + ">> An unexpected error occurred. Restarting login..." + RESET);
+                System.out.println(LoginScreen.RED +
+                        ">> An unexpected error occurred. Restarting login..." +
+                        LoginScreen.RESET);
                 attempts++;
             }
         }
@@ -141,77 +171,46 @@ public class AppMain {
         printShutdownAscii();
     }
 
-    public static void clearScreen() {
-        System.out.print("\u001B[H\u001B[2J");
-        System.out.flush();
-    }
-
-    private static void printLoginHeader() {
-        System.out.println(); 
-        System.out.println(CYAN + "+----------------------------------------------+" + RESET);
-        System.out.println(CYAN + "|           " + WHITE_BOLD + "SECURE SYSTEM LOGIN" + CYAN + "                |" + RESET);
-        System.out.println(CYAN + "+----------------------------------------------+" + RESET);
-        System.out.println(CYAN + "|                                              |" + RESET);
-        System.out.println(CYAN + "| " + RESET + "Please enter your credentials below.         " + CYAN + "|" + RESET);
-        System.out.println(CYAN + "| " + RESET + "Type " + RED + "'q'" + RESET + " to quit the application.            " + CYAN + "|" + RESET);
-        System.out.println(CYAN + "|                                              |" + RESET);
-    }
-
-    private static void printLoginFooter() {
-        System.out.println(CYAN + "|                                              |" + RESET);
-        System.out.println(CYAN + "+----------------------------------------------+" + RESET);
-    }
-
-    private static void printError(String msg) {
-        System.out.println(CYAN + "|  " + RED + "ERROR: " + msg + String.format("%" + (40 - msg.length()) + "s", "") + CYAN + "|" + RESET);
-        System.out.println(CYAN + "+----------------------------------------------+" + RESET);
-    }
-
-    private static void pressEnterToContinue(Scanner scanner) {
-        System.out.print("Press ENTER to continue...");
-        scanner.nextLine();
-    }
-
-    public static void displayWelcomeMessage() {
-        clearScreen();
-        
-        System.out.println(BLUE + "========================================================================" + RESET);
-        System.out.println(BLUE + "   ____ __  __ ____  _____ _____ _  _  _____ " + RESET);
-        System.out.println(BLUE + " / ___|  \\/  |  _ \\| ____|___ /| || ||___ / " + RESET);
-        System.out.println(BLUE + "| |   | |\\/| | |_) |  _|   |_ \\| || |_ |_ \\ " + RESET);
-        System.out.println(BLUE + "| |___| |  | |  __/| |___ ___) |__   _|__) |" + RESET);
-        System.out.println(BLUE + " \\____|_|  |_|_|   |_____|____/   |_||____/ " + RESET);
-        System.out.println();
-        System.out.println(YELLOW + "            Welcome to the CMPE 343 Course Project!             " + RESET);
-        System.out.println(BLUE + "========================================================================" + RESET);
-        
-        System.out.println(CYAN + "      Project by: MERT FAHRI CAKAR, BURAK ARSLAN, " + RESET);
-        System.out.println(CYAN + "      NERMIN ZEHRA SIPAHIOGLU, HUSEYIN YIGIT SAHIN" + RESET);
-        System.out.println();
-
-        System.out.print(YELLOW + "       System Loading... [");
-        
-        for (int i = 0; i < 20; i++) {
-            System.out.print("="); 
-            try {
-                Thread.sleep(30); 
-            } catch (InterruptedException e) {
-            }
-        }
-        System.out.println("] 100% Ready!" + RESET);
-        System.out.println();
-        
-        try { Thread.sleep(1000); } catch (Exception e) {}
-    }
-
+    // Exit / goodbye ASCII
     private static void printShutdownAscii() {
-        clearScreen();
+
+    // Slide-style animated progress bar
+    int barWidth = 30;
+    int steps = 20;       // kaç frame olacağı (20 frame hızlı ama akıcı)
+    int delayMs = 90;     // hız (login barından biraz daha hızlı)
+
+    for (int i = 0; i <= steps; i++) {
+
+        int progress = i * 100 / steps;
+        int filled = progress * barWidth / 100;
+
+        LoginScreen.clearScreen();
         System.out.println();
-        System.out.println(YELLOW + "       Saving Data... [||||||||||] 100%" + RESET);
-        System.out.println(RED + "#############################################");
-        System.out.println("#                                           #");
-        System.out.println("#           GOODBYE! SEE YOU SOON           #");
-        System.out.println("#                                           #");
-        System.out.println("#############################################" + RESET);
+        System.out.println(LoginScreen.YELLOW + "Shutting down the system..." + LoginScreen.RESET);
+        System.out.println();
+
+        // Bar çizimi
+        StringBuilder bar = new StringBuilder();
+        for (int j = 0; j < barWidth; j++) {
+            if (j < filled) bar.append("=");
+            else bar.append(" ");
+        }
+
+        System.out.println(LoginScreen.CYAN + "[" + bar + "] " + progress + "%" + LoginScreen.RESET);
+        System.out.println();
+
+        try { Thread.sleep(delayMs); } catch (Exception ignored) {}
     }
+
+    // After bar finishes → goodbye screen
+    LoginScreen.clearScreen();
+    System.out.println();
+    System.out.println(LoginScreen.RED + "#############################################");
+    System.out.println("#                                           #");
+    System.out.println("#           GOODBYE! SEE YOU SOON           #");
+    System.out.println("#                                           #");
+    System.out.println("#############################################" + LoginScreen.RESET);
+    }
+
 }
+
