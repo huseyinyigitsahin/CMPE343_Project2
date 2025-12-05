@@ -184,7 +184,24 @@ public class ManagerMenu extends TesterMenu {
         if (pause) waitForEnter();
     }
 
+<<<<<<< HEAD
     // ============================= ADD USER (VALIDATION + UNDO + PW STRENGTH) =============================
+=======
+    // ------------- RETRY HELPER (Madde 12 için) -------------
+    private boolean askRetry() {
+        while (true) {
+            System.out.print("Would you like to try again? (Y/N): ");
+            String ans = scanner.nextLine().trim().toLowerCase();
+            if (ans.equals("y") || ans.equals("yes")) {
+                return true;
+            } else if (ans.equals("n") || ans.equals("no")) {
+                return false;
+            } else {
+                System.out.println(YELLOW + "Please enter Y or N." + RESET);
+            }
+        }
+    }
+>>>>>>> bac6ba53420f6f529961054c7a090fa03dafa7ac
 
     private void handleAddUser() {
         clearScreen();
@@ -399,9 +416,12 @@ public class ManagerMenu extends TesterMenu {
             }
         }
     }
+<<<<<<< HEAD
 
     // ============================= UPDATE USER =============================
 
+=======
+>>>>>>> bac6ba53420f6f529961054c7a090fa03dafa7ac
     private void handleUpdateUser() {
         while (true) {
             clearScreen();
@@ -476,6 +496,7 @@ public class ManagerMenu extends TesterMenu {
 
                 // ---------- NEW USERNAME ----------
                 System.out.print("New username (leave blank to keep '" + currentUsername + "'): ");
+<<<<<<< HEAD
                 String newUsername = scanner.nextLine().trim();
                 if (newUsername.isEmpty()) {
                     newUsername = currentUsername;
@@ -486,9 +507,24 @@ public class ManagerMenu extends TesterMenu {
                         continue;
                     }
                 }
+=======
+String newUsername = scanner.nextLine().trim();
+if (newUsername.isEmpty()) {
+    newUsername = currentUsername;
+} else if (newUsername.length() > MAX_USERNAME_LEN) {
+    System.out.println(RED + "Username is too long." + RESET);
+    if (askRetry()) {
+        continue;   // while(true) başına dön, kullanıcıyı yeniden seçsin
+    } else {
+        return;     // ana menüye dön
+    }
+}
+
+>>>>>>> bac6ba53420f6f529961054c7a090fa03dafa7ac
 
                 // ---------- NEW NAME ----------
                 System.out.print("New name (leave blank to keep '" + currentName + "'): ");
+<<<<<<< HEAD
                 String newName = scanner.nextLine().trim();
                 if (newName.isEmpty()) {
                     newName = currentName;
@@ -499,9 +535,24 @@ public class ManagerMenu extends TesterMenu {
                         continue;
                     }
                 }
+=======
+String newName = scanner.nextLine().trim();
+if (newName.isEmpty()) {
+    newName = currentName;
+} else if (newName.length() > MAX_NAME_LEN) {
+    System.out.println(RED + "Name is too long." + RESET);
+    if (askRetry()) {
+        continue;
+    } else {
+        return;
+    }
+}
+
+>>>>>>> bac6ba53420f6f529961054c7a090fa03dafa7ac
 
                 // ---------- NEW SURNAME ----------
                 System.out.print("New surname (leave blank to keep '" + currentSurname + "'): ");
+<<<<<<< HEAD
                 String newSurname = scanner.nextLine().trim();
                 if (newSurname.isEmpty()) {
                     newSurname = currentSurname;
@@ -512,6 +563,20 @@ public class ManagerMenu extends TesterMenu {
                         continue;
                     }
                 }
+=======
+String newSurname = scanner.nextLine().trim();
+if (newSurname.isEmpty()) {
+    newSurname = currentSurname;
+} else if (newSurname.length() > MAX_SURNAME_LEN) {
+    System.out.println(RED + "Surname is too long." + RESET);
+    if (askRetry()) {
+        continue;
+    } else {
+        return;
+    }
+}
+
+>>>>>>> bac6ba53420f6f529961054c7a090fa03dafa7ac
 
                 // ---------- ROLE ----------
                 System.out.println("Current role: " + currentRole);
@@ -539,6 +604,7 @@ public class ManagerMenu extends TesterMenu {
                     if (rows > 0) {
                         System.out.println(GREEN + "User updated successfully." + RESET);
                         updateSuccess = true;
+<<<<<<< HEAD
 
                         undoUserStack.push(new UserSnapshot(
                                 "UPDATE",
@@ -549,6 +615,10 @@ public class ManagerMenu extends TesterMenu {
                                 currentSurname,
                                 currentRole
                         ));
+=======
+                        
+                        undoUserStack.push(new UserSnapshot("UPDATE", userId, currentUsername, currentHash, currentName, currentSurname, currentRole));
+>>>>>>> bac6ba53420f6f529961054c7a090fa03dafa7ac
                     } else {
                         System.out.println(YELLOW + "No changes applied." + RESET);
                     }
@@ -637,9 +707,12 @@ public class ManagerMenu extends TesterMenu {
             System.out.println(RED + "Error: " + e.getMessage() + RESET);
         }
     }
+<<<<<<< HEAD
 
     // ============================= DELETE USER (UNDO DESTEKLİ) =============================
 
+=======
+>>>>>>> bac6ba53420f6f529961054c7a090fa03dafa7ac
     private void handleDeleteUser() {
         while (true) {
             clearScreen();
