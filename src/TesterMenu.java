@@ -6,39 +6,95 @@ import java.sql.SQLException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
+/**
+ * Menu class for tester users. Provides options to change password,
+ * list contacts, search contacts (simple and advanced) and sort contacts.
+ */
 public class TesterMenu {
 
-    // ====== ANSI COLORS ======
+    /**
+     * ANSI reset color code.
+     */
     protected static final String RESET  = "\u001B[0m";
+
+    /**
+     * ANSI red color code.
+     */
     protected static final String RED    = "\u001B[31m";
+
+    /**
+     * ANSI green color code.
+     */
     protected static final String GREEN  = "\u001B[32m";
+
+    /**
+     * ANSI yellow color code.
+     */
     protected static final String YELLOW = "\u001B[33m";
+
+    /**
+     * ANSI cyan color code.
+     */
     protected static final String CYAN   = "\u001B[36m";
 
-    // Commands for advanced search
+    /**
+     * Command to quit from advanced search flow.
+     */
     protected static final String CMD_QUIT = "quit";
+
+    /**
+     * Command to go back in advanced search flow.
+     */
     protected static final String CMD_BACK = "back";
 
-    // Search input maximum length
+    /**
+     * Maximum allowed search keyword length.
+     */
     protected static final int MAX_SEARCH_LEN = 100;
 
-    // One format for the whole contact table
+    /**
+     * Format string for printing contact table rows.
+     */
     protected static final String CONTACT_ROW_FORMAT =
             "%-4s %-25s %-15s %-22s %-28s %-28s %-12s %-19s %-19s%n";
 
-    // ====== FIELDS ======
+    /**
+     * Username of the logged-in user.
+     */
     protected final String username;
+
+    /**
+     * Full name of the logged-in user as loaded or passed from login.
+     */
     protected final String fullName;
+
+    /**
+     * Role of the logged-in user.
+     */
     protected final String role;
+
+    /**
+     * Scanner instance used for console input.
+     */
     protected final Scanner scanner;
 
+    /**
+     * Password strength that was evaluated at login time.
+     */
     protected final String passwordStrengthAtLogin;
 
-    // ====== CONSTRUCTOR ======
+    /**
+     * Constructs a TesterMenu instance with user information and input scanner.
+     *
+     * @param username                 username of the logged-in user
+     * @param fullName                 full name of the logged-in user
+     * @param role                     role of the logged-in user
+     * @param scanner                  scanner used for console input
+     * @param passwordStrengthAtLogin  strength of the password evaluated at login
+     */
     public TesterMenu(String username,
                       String fullName,
                       String role,
@@ -51,7 +107,9 @@ public class TesterMenu {
         this.passwordStrengthAtLogin = trimOrEmpty(passwordStrengthAtLogin);
     }
 
-    // ====== MAIN TESTER MENU ======
+    /**
+     * Main loop that displays the tester menu and handles user choices.
+     */
     public void showMenu() {
         while (true) {
             clearScreen();
@@ -108,55 +166,100 @@ public class TesterMenu {
         }
     }
 
-    // ====== BASIC HELPERS ======
-
+    /**
+     * Returns a new database connection.
+     *
+     * @return a {@link Connection} instance or {@code null} if connection fails
+     */
     protected Connection getConnection() {
         dB_Connection db = new dB_Connection();
         return db.connect();
     }
 
+    /**
+     * Clears the console screen using ANSI escape codes.
+     */
     protected void clearScreen() {
         System.out.print("\u001B[H\u001B[2J");
         System.out.flush();
     }
 
+    /**
+     * Trims the given string or returns empty string if {@code null}.
+     *
+     * @param s string to trim
+     * @return trimmed string or empty string if {@code null}
+     */
     protected static String trimOrEmpty(String s) {
         return (s == null) ? "" : s.trim();
     }
 
+    /**
+     * Reads a line from the scanner and returns it trimmed.
+     *
+     * @return trimmed input line
+     */
     protected String readTrimmed() {
         String s = scanner.nextLine();
         return trimOrEmpty(s);
     }
 
+    /**
+     * Converts text to lower case using Turkish locale.
+     *
+     * @param text text to convert
+     * @return lower cased text using Turkish locale, or empty string if input is empty
+     */
     protected String toLowerTr(String text) {
         text = trimOrEmpty(text);
-        if (text.isEmpty())
+        if (text.isEmpty()) {
             return "";
+        }
         return text.toLowerCase(new java.util.Locale("tr", "TR"));
     }
 
-    // TEK ENTER
+    /**
+     * Waits for the user to press ENTER to continue.
+     */
     protected void waitForEnter() {
         System.out.print(YELLOW + "Press ENTER to continue: " + RESET);
         scanner.nextLine();
     }
 
+    /**
+     * Normalizes a phone number by removing all non-digit characters.
+     *
+     * @param raw raw phone number text
+     * @return digits-only phone number, or empty string if input is empty
+     */
     protected String normalizePhone(String raw) {
         raw = trimOrEmpty(raw);
-        if (raw.isEmpty())
+        if (raw.isEmpty()) {
             return "";
+        }
         return raw.replaceAll("[^0-9]", "");
     }
 
+    /**
+     * Normalizes a phone number for search purposes.
+     *
+     * @param raw raw phone number text
+     * @return normalized phone digits
+     */
     protected String normalizedPhoneForSearch(String raw) {
         return normalizePhone(raw);
     }
 
+    /**
+     * Loads real full name from the database using the username.
+     *
+     * @return concatenated first name and surname, or the stored fullName if not found
+     */
     protected String loadRealFullName() {
         Connection con = getConnection();
-        if (con == null)
+        if (con == null) {
             return fullName;
+        }
 
         String sql = "SELECT name, surname FROM users WHERE username = ?";
 
@@ -183,7 +286,11 @@ public class TesterMenu {
         return fullName;
     }
 
-    // Ask user if they want to retry or go back
+    /**
+     * Asks the user whether they want to retry or go back in case of invalid input.
+     *
+     * @return {@code true} if the user wants to retry, {@code false} to go back
+     */
     protected boolean askRetryOrBack() {
         while (true) {
             System.out.println();
@@ -204,10 +311,16 @@ public class TesterMenu {
         }
     }
 
-    // Operator label for showing next to input
+    /**
+     * Returns a human-readable label for the operator key.
+     *
+     * @param op operator key (starts, contains, equals, etc.)
+     * @return operator label text
+     */
     protected String getOperatorLabel(String op) {
-        if (op == null)
+        if (op == null) {
             return "";
+        }
         switch (op) {
             case "starts":
                 return "STARTS WITH";
@@ -220,38 +333,65 @@ public class TesterMenu {
         }
     }
 
-    // ====== VALIDATION HELPERS ======
-
+    /**
+     * Validates that a name contains only allowed letters.
+     *
+     * @param text name text
+     * @return {@code true} if valid, {@code false} otherwise
+     */
     protected boolean isValidName(String text) {
         text = trimOrEmpty(text);
-        if (text.isEmpty())
+        if (text.isEmpty()) {
             return false;
+        }
         return text.matches("[A-Za-zÇĞİÖŞÜçğıöşü]+");
     }
 
+    /**
+     * Validates nickname rules (no spaces, allowed characters).
+     *
+     * @param text nickname text
+     * @return {@code true} if valid, {@code false} otherwise
+     */
     protected boolean isValidNickname(String text) {
         text = trimOrEmpty(text);
-        if (text.isEmpty())
+        if (text.isEmpty()) {
             return false;
-        if (text.contains(" "))
+        }
+        if (text.contains(" ")) {
             return false;
+        }
 
         return text.matches("[A-Za-zÇĞİÖŞÜçğıöşü0-9_.]+");
     }
 
+    /**
+     * Validates if a phone number is an exact 10-digit number.
+     *
+     * @param raw raw phone text
+     * @return {@code true} if exactly 10 digits, {@code false} otherwise
+     */
     protected boolean isValidPhoneExact(String raw) {
         raw = trimOrEmpty(raw);
-        if (raw.isEmpty())
+        if (raw.isEmpty()) {
             return false;
+        }
         String digits = normalizePhone(raw);
         return digits.length() == 10 && digits.matches("\\d+");
     }
 
+    /**
+     * Finds the first forbidden character in an email string.
+     *
+     * @param email email text
+     * @return the forbidden character, or 0 if none found
+     */
     protected char findForbiddenEmailChar(String email) {
         email = trimOrEmpty(email);
-        if (email.isEmpty())
+        if (email.isEmpty()) {
             return 0;
-        String forbidden = "!?%^&*()=+{}[]|\"'<>,"; // common problematic ones
+        }
+        String forbidden = "!?%^&*()=+{}[]|\"'<>,"; 
         for (int i = 0; i < email.length(); i++) {
             char c = email.charAt(i);
             if (forbidden.indexOf(c) >= 0) {
@@ -261,12 +401,20 @@ public class TesterMenu {
         return 0;
     }
 
+    /**
+     * Validates email format and domain for an equals comparison.
+     *
+     * @param email email text
+     * @return {@code true} if valid and allowed domain, {@code false} otherwise
+     */
     protected boolean isValidEmailForEquals(String email) {
         email = trimOrEmpty(email);
-        if (email.isEmpty())
+        if (email.isEmpty()) {
             return false;
-        if (email.contains(" "))
+        }
+        if (email.contains(" ")) {
             return false;
+        }
 
         String regex = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$";
         if (!email.matches(regex)) {
@@ -274,8 +422,9 @@ public class TesterMenu {
         }
 
         int atIndex = email.lastIndexOf('@');
-        if (atIndex < 0 || atIndex == email.length() - 1)
+        if (atIndex < 0 || atIndex == email.length() - 1) {
             return false;
+        }
 
         String domain = email.substring(atIndex + 1).toLowerCase();
 
@@ -285,6 +434,12 @@ public class TesterMenu {
                 || domain.equals("yahoo.com");
     }
 
+    /**
+     * Validates an exact date string in format yyyy-MM-dd that is not in the future.
+     *
+     * @param date date string
+     * @return {@code true} if valid date and not in future, {@code false} otherwise
+     */
     protected boolean isValidExactDate(String date) {
         date = trimOrEmpty(date);
         if (!date.matches("\\d{4}-\\d{2}-\\d{2}")) {
@@ -302,11 +457,16 @@ public class TesterMenu {
         }
     }
 
-    // ====== PASSWORD HELPERS ======
-
+    /**
+     * Hashes a password using SHA-256 algorithm.
+     *
+     * @param password raw password
+     * @return hexadecimal hash string, or empty string if hashing fails
+     */
     protected String hashPassword(String password) {
-        if (password == null)
+        if (password == null) {
             return "";
+        }
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] hashBytes = md.digest(password.getBytes());
@@ -320,9 +480,16 @@ public class TesterMenu {
         }
     }
 
+    /**
+     * Evaluates password strength based on length and character variety.
+     *
+     * @param password password to evaluate
+     * @return one of "very_weak", "weak", "medium", "strong"
+     */
     protected String evaluatePasswordStrength(String password) {
-        if (password == null)
+        if (password == null) {
             return "very_weak";
+        }
 
         int length = password.length();
         boolean hasLetter = password.matches(".*[A-Za-z].*");
@@ -338,12 +505,15 @@ public class TesterMenu {
         }
 
         int score = 0;
-        if (hasLetter)
+        if (hasLetter) {
             score++;
-        if (hasDigit)
+        }
+        if (hasDigit) {
             score++;
-        if (hasSymbol)
+        }
+        if (hasSymbol) {
             score++;
+        }
 
         if (length >= 12 && score >= 2) {
             return "strong";
@@ -352,6 +522,9 @@ public class TesterMenu {
         return "medium";
     }
 
+    /**
+     * Prints a banner message describing the password strength at login.
+     */
     protected void printPasswordStrengthBanner() {
         if (passwordStrengthAtLogin == null || passwordStrengthAtLogin.isBlank()) {
             return;
@@ -385,6 +558,11 @@ public class TesterMenu {
         System.out.println(color + "[Password check at login] " + msg + RESET);
     }
 
+    /**
+     * Generates a random strong password suggestion containing letters, digits and symbols.
+     *
+     * @return generated strong password string
+     */
     protected String generateStrongPasswordSuggestion() {
         String upper   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         String lower   = "abcdefghijklmnopqrstuvwxyz";
@@ -418,8 +596,9 @@ public class TesterMenu {
         return new String(chars);
     }
 
-    // ====== CONTACT TABLE HELPERS ======
-
+    /**
+     * Prints the header row for the contact table.
+     */
     protected void printContactHeader() {
         System.out.printf(CONTACT_ROW_FORMAT,
                 "ID",
@@ -443,6 +622,12 @@ public class TesterMenu {
                 "-------------------");
     }
 
+    /**
+     * Prints a single contact row using the given result set.
+     *
+     * @param rs result set positioned at a contact row
+     * @throws SQLException if reading from result set fails
+     */
     protected void printContactRow(ResultSet rs) throws SQLException {
         int id = rs.getInt("contact_id");
         String firstName    = trimOrEmpty(rs.getString("first_name"));
@@ -469,8 +654,9 @@ public class TesterMenu {
             phones = phonePrimary;
         }
         if (!phoneSecondary.isEmpty()) {
-            if (!phones.isBlank())
+            if (!phones.isBlank()) {
                 phones += " / ";
+            }
             phones += phoneSecondary;
         }
 
@@ -486,7 +672,9 @@ public class TesterMenu {
                 updatedAt);
     }
 
-    // ====== 1) CHANGE PASSWORD ======
+    /**
+     * Handles the change password flow for the current user.
+     */
     protected void handleChangePassword() {
         clearScreen();
         System.out.println(CYAN + "=== CHANGE PASSWORD ===" + RESET);
@@ -497,8 +685,9 @@ public class TesterMenu {
 
         System.out.print("Current password: ");
         String currentPassword = scanner.nextLine();
-        if (currentPassword != null)
+        if (currentPassword != null) {
             currentPassword = currentPassword.trim();
+        }
 
         if (currentPassword != null && currentPassword.equalsIgnoreCase("q")) {
             System.out.println(YELLOW + "Password change cancelled." + RESET);
@@ -555,8 +744,9 @@ public class TesterMenu {
             while (true) {
                 System.out.print("New password: ");
                 newPassword = scanner.nextLine();
-                if (newPassword != null)
+                if (newPassword != null) {
                     newPassword = newPassword.trim();
+                }
 
                 if (newPassword != null && newPassword.equalsIgnoreCase("q")) {
                     System.out.println(YELLOW + "Password change cancelled." + RESET);
@@ -607,8 +797,9 @@ public class TesterMenu {
 
             System.out.print("Confirm new password: ");
             String confirmPassword = scanner.nextLine();
-            if (confirmPassword != null)
+            if (confirmPassword != null) {
                 confirmPassword = confirmPassword.trim();
+            }
 
             if (confirmPassword != null && confirmPassword.equalsIgnoreCase("q")) {
                 System.out.println(YELLOW + "Password change cancelled." + RESET);
@@ -655,8 +846,9 @@ public class TesterMenu {
         waitForEnter();
     }
 
-    // ====== 2) LIST ALL CONTACTS ======
-
+    /**
+     * Lists all contacts stored in the database.
+     */
     protected void handleListContacts() {
         clearScreen();
         System.out.println(CYAN + "=== CONTACT LIST ===" + RESET);
@@ -698,8 +890,9 @@ public class TesterMenu {
         waitForEnter();
     }
 
-    // ====== 3) SEARCH MENU (SIMPLE + ADVANCED) ======
-
+    /**
+     * Shows search menu and routes to simple or advanced search.
+     */
     protected void handleSearchContacts() {
         while (true) {
             clearScreen();
@@ -724,8 +917,12 @@ public class TesterMenu {
         }
     }
 
-    // ====== OPERATOR HELPER ======
-
+    /**
+     * Shows operator selection menu for a search field.
+     *
+     * @param label user-friendly field label
+     * @return operator key ("starts", "contains", "equals"), "back" or {@code null} if invalid
+     */
     protected String selectOperator(String label) {
         System.out.println();
         System.out.println(CYAN + "Select operator for " + label + ":" + RESET);
@@ -750,8 +947,9 @@ public class TesterMenu {
         }
     }
 
-    // ====== SIMPLE SEARCH ======
-
+    /**
+     * Performs a single-field simple search on contacts.
+     */
     protected void simpleSearch() {
 
         while (true) {
@@ -1111,8 +1309,11 @@ public class TesterMenu {
         }
     }
 
-    // ====== QUICK FILTERS (ADVANCED) ======
-
+    /**
+     * Runs predefined quick filters in advanced search.
+     *
+     * @param mainChoice "1", "2" or "3" indicating which quick filter to run
+     */
     protected void runQuickFilter(String mainChoice) {
         Connection con = getConnection();
         if (con == null) {
@@ -1170,8 +1371,9 @@ public class TesterMenu {
         }
     }
 
-    // ====== ADVANCED SEARCH (CUSTOM, ALWAYS AND) ======
-
+    /**
+     * Performs the advanced search which can include quick filters or custom multi-field filters.
+     */
     protected void advancedSearch() {
 
         while (true) {
@@ -1258,17 +1460,17 @@ public class TesterMenu {
             int count = 0;
             boolean backToAdvancedMenu = false;
 
-            // ===== condition toplama =====
             while (true) {
 
                 System.out.println();
                 System.out.println(CYAN + "Selected filters so far: " + count + RESET);
 
-                // Eklenen filtreleri yukarıda göster
                 if (count > 0) {
                     System.out.println(YELLOW + "Current filters:" + RESET);
                     for (int i = 0; i < count; i++) {
-                        if (labels[i] == null || ops[i] == null || val1[i] == null) continue;
+                        if (labels[i] == null || ops[i] == null || val1[i] == null) {
+                            continue;
+                        }
 
                         String opText;
                         switch (ops[i]) {
@@ -1390,7 +1592,6 @@ public class TesterMenu {
                 String value1 = null;
                 String value2 = null;
 
-                // ===== BIRTH DATE =====
                 if ("6".equals(fieldOption)) {
                     System.out.println();
                     System.out.println(CYAN + "Birth Date search mode:" + RESET);
@@ -1482,10 +1683,8 @@ public class TesterMenu {
                     }
 
                 } else {
-                    // ===== diğer alanlar: operator + value loop =====
                     boolean conditionReady = false;
                     while (!conditionReady) {
-                        // operator seçimi
                         while (true) {
                             System.out.println();
                             op = selectOperator(label);
@@ -1494,7 +1693,6 @@ public class TesterMenu {
                                 continue;
                             }
                             if (op.equals("back")) {
-                                // operator menüsünde back -> field seçimine geri dön
                                 columnName = null;
                                 label = null;
                                 break;
@@ -1503,11 +1701,9 @@ public class TesterMenu {
                         }
 
                         if (op == null || "back".equals(op)) {
-                            // field seçim döngüsüne geri dön
                             break;
                         }
 
-                        // value girişi
                         while (true) {
                             String opLabel = getOperatorLabel(op);
                             System.out.print("Enter search text for " + label + " (" + CYAN + opLabel + RESET
@@ -1521,7 +1717,6 @@ public class TesterMenu {
                             }
 
                             if (value1.equalsIgnoreCase(CMD_BACK)) {
-                                // tekrar operator seçimi
                                 op = null;
                                 value1 = null;
                                 break;
@@ -1537,7 +1732,6 @@ public class TesterMenu {
                                 continue;
                             }
 
-                            // VALIDASYONLAR
                             if (columnName.equals("phone_primary")) {
                                 String normalized = normalizePhone(value1);
                                 if (normalized.isEmpty()) {
@@ -1599,7 +1793,6 @@ public class TesterMenu {
                                 }
                             }
 
-                            // buraya geldiysek condition hazır
                             conditionReady = true;
                             break;
                         }
@@ -1607,16 +1800,13 @@ public class TesterMenu {
                         if (conditionReady) {
                             break;
                         }
-                        // eğer value kısmında BACK denip operator'a dönüldüyse, üst while tekrar döner
                     }
 
                     if (op == null || "back".equals(op) || columnName == null) {
-                        // Bu field için condition tamamlanmadı, field seçimini tekrar iste
                         continue;
                     }
                 }
 
-                // condition eklendi
                 columns[count] = columnName;
                 labels[count]  = label;
                 ops[count]     = op;
@@ -1638,7 +1828,6 @@ public class TesterMenu {
                         break;
                     }
                 } else {
-                    // max condition'a ulaştı
                     break;
                 }
             }
@@ -1648,7 +1837,6 @@ public class TesterMenu {
                 continue;
             }
 
-            // min 2 condition kontrolü
             if (count < 2) {
                 System.out.println();
                 System.out.println(
@@ -1671,7 +1859,6 @@ public class TesterMenu {
                 return;
             }
 
-            // ===== query inşa =====
             Connection con = getConnection();
             if (con == null) {
                 System.out.println(RED + "Database connection failed." + RESET);
@@ -1700,10 +1887,11 @@ public class TesterMenu {
                 }
             }
 
-            // Filtre özetini hazırla
             StringBuilder filterSummary = new StringBuilder();
             for (int i = 0; i < count; i++) {
-                if (labels[i] == null || ops[i] == null || val1[i] == null) continue;
+                if (labels[i] == null || ops[i] == null || val1[i] == null) {
+                    continue;
+                }
                 String opText;
                 switch (ops[i]) {
                     case "starts":
@@ -1840,13 +2028,19 @@ public class TesterMenu {
         }
     }
 
-    // Convert month name or number to 1-12
+    /**
+     * Parses a month from either numeric string (1-12) or English month name.
+     *
+     * @param raw raw month input
+     * @return month number between 1 and 12, or -1 if invalid
+     */
     protected int parseMonthToInt(String raw) {
         String t = trimOrEmpty(raw).toLowerCase();
         try {
             int m = Integer.parseInt(t);
-            if (m >= 1 && m <= 12)
+            if (m >= 1 && m <= 12) {
                 return m;
+            }
         } catch (NumberFormatException ignored) {
         }
 
@@ -1880,8 +2074,9 @@ public class TesterMenu {
         }
     }
 
-    // ====== 4) SORT CONTACTS ======
-
+    /**
+     * Handles sorting of contacts by a selected field and order.
+     */
     protected void handleSortContacts() {
 
         clearScreen();
