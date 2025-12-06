@@ -25,7 +25,7 @@ public class JuniorDevMenu extends TesterMenu {
         while (true) {
             clearScreen();
             String realFullName = loadRealFullName();
-
+            
             System.out.println(CYAN + "=== JUNIOR DEVELOPER MENU ===" + RESET);
             System.out.println(GREEN + "User: " + RESET + realFullName + " (" + username + ")");
             System.out.println(GREEN + "Role: " + RESET + role);
@@ -59,24 +59,12 @@ public class JuniorDevMenu extends TesterMenu {
 
             try {
                 switch (choice) {
-                    case 1:
-                        handleChangePassword();
-                        break;
-                    case 2:
-                        handleListContacts();
-                        break;
-                    case 3:
-                        handleSearchContacts();
-                        break;
-                    case 4:
-                        handleSortContacts();
-                        break;
-                    case 5:
-                        handleUpdateContact();
-                        break;
-                    case 6:
-                        handleUndo();
-                        break;
+                    case 1: handleChangePassword(); break;
+                    case 2: handleListContacts(); break;
+                    case 3: handleSearchContacts(); break;
+                    case 4: handleSortContacts(); break;
+                    case 5: handleUpdateContact(); break;
+                    case 6: handleUndo(); break;
                     case 7:
                         System.out.println(YELLOW + "Logging out..." + RESET);
                         return;
@@ -92,17 +80,17 @@ public class JuniorDevMenu extends TesterMenu {
     }
 
     protected void handleUpdateContact() {
-        while (true) {
+        outerLoop: while (true) {
             clearScreen();
             System.out.println(CYAN + "=== UPDATE CONTACT ===" + RESET);
-
-            handleListContactsForUpdate();
+            
+            handleListContactsForUpdate(); 
 
             System.out.println();
             System.out.println(YELLOW + "Enter 'q' to return to Main Menu." + RESET);
             System.out.print("Enter ID of contact to update: ");
             String idInput = scanner.nextLine().trim();
-
+            
             if (idInput.equalsIgnoreCase("q")) return;
 
             int contactId;
@@ -111,18 +99,21 @@ public class JuniorDevMenu extends TesterMenu {
             } catch (NumberFormatException e) {
                 System.out.println(RED + "Invalid ID format. Please enter a number." + RESET);
                 waitForEnter();
-                continue;
+                continue outerLoop; 
             }
 
             if (contactId <= 0) {
                 System.out.println(RED + "ID must be positive." + RESET);
                 waitForEnter();
-                continue;
+                continue outerLoop;
             }
 
-            while (true) {
+            innerLoop: while (true) {
+                clearScreen();
+                System.out.println(CYAN + "=== UPDATE FIELD SELECTION ===" + RESET);
+                System.out.println("Updating Contact ID: " + contactId);
                 System.out.println();
-                System.out.println(CYAN + "Which field do you want to update?" + RESET);
+                System.out.println("Which field do you want to update?");
                 System.out.println(GREEN + "1)" + RESET + " First Name");
                 System.out.println(GREEN + "2)" + RESET + " Middle Name");
                 System.out.println(GREEN + "3)" + RESET + " Last Name");
@@ -134,111 +125,101 @@ public class JuniorDevMenu extends TesterMenu {
                 System.out.println(GREEN + "9)" + RESET + " Birth Date");
                 System.out.println(GREEN + "0)" + RESET + " Back to Main Menu");
                 System.out.print(YELLOW + "Select (0-9): " + RESET);
-
+                
                 String fieldChoice = scanner.nextLine().trim();
 
                 if (fieldChoice.equals("0") || fieldChoice.equalsIgnoreCase("q")) {
-                    return;
+                    return; 
                 }
 
                 String columnName = "";
                 String newValue = "";
-
-                boolean inputValid = false;
-
-                while (!inputValid) {
+                
+                while (true) {
+                    System.out.println(); 
+                    
                     switch (fieldChoice) {
                         case "1":
                             columnName = "first_name";
-                            System.out.println(CYAN + "\nFormat for First Name:" + RESET);
+                            System.out.println(CYAN + "Format for First Name:" + RESET);
                             System.out.println(YELLOW + "- Only letters (Turkish supported)." + RESET);
                             System.out.println(YELLOW + "- Max 50 chars. No digits/spaces." + RESET);
                             break;
                         case "2":
                             columnName = "middle_name";
-                            System.out.println(CYAN + "\nFormat for Middle Name:" + RESET);
+                            System.out.println(CYAN + "Format for Middle Name:" + RESET);
                             System.out.println(YELLOW + "- Optional. Only letters." + RESET);
                             break;
                         case "3":
                             columnName = "last_name";
-                            System.out.println(CYAN + "\nFormat for Last Name:" + RESET);
+                            System.out.println(CYAN + "Format for Last Name:" + RESET);
                             System.out.println(YELLOW + "- Only letters. Max 50 chars." + RESET);
                             break;
                         case "4":
                             columnName = "nickname";
-                            System.out.println(CYAN + "\nFormat for Nickname:" + RESET);
+                            System.out.println(CYAN + "Format for Nickname:" + RESET);
                             System.out.println(YELLOW + "- Letters, digits, dot, underscore allowed." + RESET);
                             break;
                         case "5":
                             columnName = "phone_primary";
-                            System.out.println(CYAN + "\nFormat for Primary Phone:" + RESET);
+                            System.out.println(CYAN + "Format for Primary Phone:" + RESET);
                             System.out.println(YELLOW + "- Exactly 10 digits (e.g. 5321112233)." + RESET);
                             break;
                         case "6":
                             columnName = "phone_secondary";
-                            System.out.println(CYAN + "\nFormat for Secondary Phone:" + RESET);
+                            System.out.println(CYAN + "Format for Secondary Phone:" + RESET);
                             System.out.println(YELLOW + "- Optional. Exactly 10 digits." + RESET);
                             break;
                         case "7":
                             columnName = "email";
-                            System.out.println(CYAN + "\nFormat for Email:" + RESET);
-                            System.out.println(YELLOW + "- Must contain '@'. No spaces." + RESET);
+                            System.out.println(CYAN + "Format for Email:" + RESET);
+                            System.out.println(YELLOW + "- Supported: gmail, outlook, hotmail, yahoo." + RESET);
+                            System.out.println(YELLOW + "- No spaces, forbidden chars: ! % & * ' \"" + RESET);
                             break;
                         case "8":
                             columnName = "linkedin_url";
-                            System.out.println(CYAN + "\nFormat for LinkedIn:" + RESET);
-                            System.out.println(YELLOW + "- Max 100 chars." + RESET);
+                            System.out.println(CYAN + "Format for LinkedIn:" + RESET);
+                            System.out.println(YELLOW + "- Enter ONLY the username (e.g. ahmet-yilmaz)." + RESET);
+                            System.out.println(YELLOW + "- Do NOT enter full URL (https://...)." + RESET);
                             break;
                         case "9":
                             columnName = "birth_date";
-                            System.out.println(CYAN + "\nFormat for Birth Date:" + RESET);
+                            System.out.println(CYAN + "Format for Birth Date:" + RESET);
                             System.out.println(YELLOW + "- Format: YYYY-MM-DD (e.g. 1995-04-23)." + RESET);
                             break;
                         default:
                             System.out.println(RED + "Invalid selection. Please try again." + RESET);
-                            break;
+                            waitForEnter();
+                            continue innerLoop; 
                     }
 
-                    if (columnName.isEmpty())
-                        break;
-
-                    System.out.print("Enter new value (or 'q' to cancel): ");
+                    System.out.print(YELLOW + "Enter new value (or 'q' to cancel): " + RESET);
                     newValue = scanner.nextLine().trim();
 
                     if (newValue.equalsIgnoreCase("q")) {
-                        System.out.println(YELLOW + "Update cancelled." + RESET);
-                        return;
+                        System.out.println(YELLOW + "Operation cancelled." + RESET);
+                        continue innerLoop; 
                     }
 
                     boolean hasError = false;
 
-                    if ((columnName.equals("first_name") || columnName.equals("last_name") ||
-                            columnName.equals("phone_primary") || columnName.equals("email")) && newValue.isEmpty()) {
+                    if ((columnName.equals("first_name") || columnName.equals("last_name") || 
+                         columnName.equals("phone_primary") || columnName.equals("email")) && newValue.isEmpty()) {
                         System.out.println(RED + ">> Error: This field cannot be empty!" + RESET);
                         hasError = true;
                     }
 
                     if (!hasError && (columnName.equals("first_name") || columnName.equals("last_name"))) {
-                        if (!newValue.isEmpty()) {
-                            if (newValue.length() > MAX_NAME_LEN) {
-                                System.out.println(RED + ">> Error: Name is too long." + RESET);
-                                hasError = true;
-                            } else if (!isValidName(newValue)) {
-                                System.out.println(RED + ">> Error: Name must contain only letters." + RESET);
-                                hasError = true;
-                            }
+                        if (!newValue.isEmpty() && !isValidName(newValue)) {
+                            System.out.println(RED + ">> Error: Name must contain only letters." + RESET);
+                            hasError = true;
                         }
                     }
 
                     if (!hasError && columnName.equals("nickname")) {
-                        if (!newValue.isEmpty()) {
-                            if (newValue.length() > MAX_NICK_LEN) {
-                                System.out.println(RED + ">> Error: Nickname is too long." + RESET);
-                                hasError = true;
-                            } else if (!isValidNickname(newValue)) {
-                                System.out.println(RED + ">> Error: Invalid characters in nickname." + RESET);
-                                hasError = true;
-                            }
+                        if (!newValue.isEmpty() && !isValidNickname(newValue)) {
+                            System.out.println(RED + ">> Error: Invalid characters in nickname." + RESET);
+                            hasError = true;
                         }
                     }
 
@@ -254,50 +235,49 @@ public class JuniorDevMenu extends TesterMenu {
                         }
                     }
 
+                    // --- EMAIL CHECK (Senior ile aynı) ---
                     if (!hasError && columnName.equals("email")) {
-                        if (!newValue.isEmpty()) {
-                            if (newValue.length() > MAX_EMAIL_LEN) {
-                                System.out.println(RED + ">> Error: Email is too long." + RESET);
-                                hasError = true;
-                            } else if (!newValue.contains("@")) {
-                                System.out.println(RED + ">> Error: Invalid email format (missing '@')." + RESET);
-                                hasError = true;
-                            } else {
-                                char bad = findForbiddenEmailChar(newValue);
-                                if (bad != 0) {
-                                    System.out.println(RED + ">> Error: Forbidden character '" + bad + "' in email."
-                                            + RESET);
-                                    hasError = true;
-                                }
-                            }
-                        }
-                    }
-
-                    if (!hasError && columnName.equals("linkedin_url")) {
-                        if (!newValue.isEmpty() && newValue.length() > MAX_LINKEDIN_LEN) {
-                            System.out.println(RED + ">> Error: LinkedIn URL is too long." + RESET);
+                        char bad = findForbiddenEmailChar(newValue);
+                        if (bad != 0) {
+                            System.out.println(RED + ">> Error: You cannot use the character '" + bad + "' in email." + RESET);
+                            hasError = true;
+                        } else if (!isValidEmailForEquals(newValue)) {
+                            System.out.println(RED + ">> Error: Invalid email format or unsupported domain." + RESET);
+                            System.out.println(YELLOW + "Supported domains: gmail.com, outlook.com, hotmail.com, yahoo.com" + RESET);
                             hasError = true;
                         }
                     }
 
+                    // --- LINKEDIN CHECK (Username only + append logic) ---
+                    if (!hasError && columnName.equals("linkedin_url")) {
+                        if (!newValue.isEmpty()) {
+                            if (newValue.startsWith("http://") || newValue.startsWith("https://") || newValue.startsWith("www.")) {
+                                System.out.println(RED + ">> Error: Do NOT type the full URL. Only username is required." + RESET);
+                                hasError = true;
+                            } else if (newValue.contains(" ")) {
+                                System.out.println(RED + ">> Error: Username cannot contain spaces." + RESET);
+                                hasError = true;
+                            } else {
+                                // Validasyon geçerse DB'ye yazmadan önce formatla
+                                newValue = "linkedin.com/in/" + newValue;
+                            }
+                        }
+                    }
+                    
                     if (!hasError && columnName.equals("birth_date") && !newValue.isEmpty()) {
                         if (!isValidExactDate(newValue)) {
-                            System.out.println(RED + ">> Error: Invalid date. Use YYYY-MM-DD (e.g. 1990-01-30)."
-                                    + RESET);
+                            System.out.println(RED + ">> Error: Invalid date. Use YYYY-MM-DD." + RESET);
                             hasError = true;
                         }
                     }
 
                     if (hasError) {
-                        System.out.println(YELLOW + "Please try again observing the rules above.\n" + RESET);
-                        continue;
+                        System.out.println(YELLOW + "Please try again observing the rules above." + RESET);
+                        continue; 
                     }
 
-                    inputValid = true;
+                    break;
                 }
-
-                if (columnName.isEmpty())
-                    continue;
 
                 Connection con = getConnection();
                 if (con == null) {
@@ -317,8 +297,7 @@ public class JuniorDevMenu extends TesterMenu {
                         ResultSet rs = selectStmt.executeQuery();
                         if (rs.next()) {
                             oldValue = rs.getString(columnName);
-                            if (oldValue == null)
-                                oldValue = "";
+                            if (oldValue == null) oldValue = ""; 
                             idExists = true;
                         }
                     }
@@ -326,27 +305,27 @@ public class JuniorDevMenu extends TesterMenu {
                     if (!idExists) {
                         System.out.println(RED + "Contact ID not found." + RESET);
                         waitForEnter();
-                        break;
+                        continue outerLoop; 
                     }
 
                     String updateSql = "UPDATE contacts SET " + columnName + " = ? WHERE contact_id = ?";
                     try (PreparedStatement updateStmt = con.prepareStatement(updateSql)) {
                         if (newValue.isEmpty() && columnName.equals("birth_date")) {
-                            updateStmt.setNull(1, java.sql.Types.DATE);
+                             updateStmt.setNull(1, java.sql.Types.DATE);
                         } else {
-                            updateStmt.setString(1, newValue);
+                             updateStmt.setString(1, newValue);
                         }
-
+                        
                         updateStmt.setInt(2, contactId);
 
                         int rows = updateStmt.executeUpdate();
                         if (rows > 0) {
                             System.out.println(GREEN + "Contact updated successfully!" + RESET);
                             undoStack.push(new UndoAction(contactId, columnName, oldValue));
-
+                            
                             System.out.println("Updated Row:");
                             printSingleContact(con, contactId);
-
+                            
                             updateSuccess = true;
                         } else {
                             System.out.println(YELLOW + "No changes applied." + RESET);
@@ -357,37 +336,34 @@ public class JuniorDevMenu extends TesterMenu {
                 } catch (SQLException e) {
                     System.out.println(RED + "SQL Error: " + e.getMessage() + RESET);
                     waitForEnter();
-                    break;
+                    continue innerLoop;
                 } finally {
-                    try {
-                        con.close();
-                    } catch (SQLException ignored) {
-                    }
+                    try { con.close(); } catch (SQLException ignored) {}
                 }
-
+                
                 if (updateSuccess) {
                     System.out.println();
                     System.out.println(CYAN + "What would you like to do next?" + RESET);
-                    System.out.println("1. Update another contact");
-                    System.out.println("2. Undo this update immediately");
-                    System.out.println("3. Return to Main Menu");
-                    System.out.print("Select (1-3): ");
-
+                    System.out.println("1. Update another field for THIS contact");
+                    System.out.println("2. Update ANOTHER contact (New ID)");
+                    System.out.println("3. Undo this update");
+                    System.out.println("4. Return to Main Menu");
+                    System.out.print("Select (1-4): ");
+                    
                     String nextAction = scanner.nextLine().trim();
-
+                    
                     if (nextAction.equals("1")) {
-                        break;
+                        continue innerLoop; 
                     } else if (nextAction.equals("2")) {
-                        handleUndo();
-                        break;
+                        continue outerLoop; 
+                    } else if (nextAction.equals("3")) {
+                        handleUndo(); 
+                        continue innerLoop; 
                     } else {
-                        return;
+                        return; 
                     }
                 } else {
-                    if (askRetry())
-                        continue;
-                    else
-                        return;
+                    if (askRetry()) continue innerLoop; else return;
                 }
             }
         }
