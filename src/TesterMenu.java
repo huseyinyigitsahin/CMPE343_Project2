@@ -136,14 +136,10 @@ public class TesterMenu {
         return text.toLowerCase(new java.util.Locale("tr", "TR"));
     }
 
+    // TEK ENTER versiyonu
     protected void waitForEnter() {
-        while (true) {
-            System.out.print(YELLOW + "Press ENTER to continue: " + RESET);
-            String input = scanner.nextLine();
-            if (trimOrEmpty(input).isEmpty())
-                return;
-            System.out.println(YELLOW + "Please press only ENTER. Do not type anything." + RESET);
-        }
+        System.out.print(YELLOW + "Press ENTER to continue: " + RESET);
+        scanner.nextLine();
     }
 
     protected String normalizePhone(String raw) {
@@ -151,6 +147,10 @@ public class TesterMenu {
         if (raw.isEmpty())
             return "";
         return raw.replaceAll("[^0-9]", "");
+    }
+
+    protected String normalizedPhoneForSearch(String raw) {
+        return normalizePhone(raw);
     }
 
     protected String loadRealFullName() {
@@ -256,10 +256,6 @@ public class TesterMenu {
         return digits.length() == 10 && digits.matches("\\d+");
     }
 
-    protected String normalizedPhoneForSearch(String raw) {
-        return normalizePhone(raw);
-    }
-
     // Find forbidden character in email
     protected char findForbiddenEmailChar(String email) {
         email = trimOrEmpty(email);
@@ -284,7 +280,7 @@ public class TesterMenu {
             return false;
 
         String regex = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$";
-               if (!email.matches(regex)) {
+        if (!email.matches(regex)) {
             return false;
         }
 
@@ -617,7 +613,7 @@ public class TesterMenu {
                     return;
                 } else if ("y".equals(choice) || "yes".equals(choice)) {
                     break;
-                } else if ("n".equals(choice) || "no") {
+                } else if ("n".equals(choice) || "no".equals(choice)) {
                     System.out.println(CYAN + "Okay, let us try again." + RESET);
                 } else {
                     System.out.println(YELLOW + "Please answer with y or n." + RESET);
@@ -889,12 +885,18 @@ public class TesterMenu {
                 System.out.println();
                 System.out.println(
                         YELLOW + "Maximum length for search text is " + MAX_SEARCH_LEN + " characters." + RESET);
-                System.out.println(YELLOW + "You can type 0 to go back." + RESET);
+                System.out.println(YELLOW + "You can type 0 to go back or '" + CMD_QUIT + "' to cancel." + RESET);
                 System.out.println();
 
                 String opLabel = getOperatorLabel(op);
                 System.out.print("Enter search text for " + fieldLabel + " (" + CYAN + opLabel + RESET + "): ");
                 String keyword = readTrimmed();
+
+                if (keyword.equalsIgnoreCase(CMD_QUIT)) {
+                    System.out.println(YELLOW + "Simple search cancelled." + RESET);
+                    waitForEnter();
+                    return;
+                }
 
                 if (keyword.equals("0")) {
                     stayOnSameField = false;
@@ -1225,7 +1227,6 @@ public class TesterMenu {
                     String choice = readTrimmed().toLowerCase();
 
                     if (choice.equals("a")) {
-                        // tekrar advanced search menüsüne
                         break;
                     } else if (choice.equals("s")) {
                         simpleSearch();
@@ -1445,20 +1446,28 @@ public class TesterMenu {
                     }
                 } else {
                     String opTmp = selectOperator(label);
-                    if (opTmp == null || opTmp.equals("back")) {
-                        System.out.println(RED + "Invalid operator. Condition ignored." + RESET);
+                    if (opTmp == null) {
+                        System.out.println(RED + "Invalid operator. Please try again." + RESET);
+                        continue;
+                    }
+                    if (opTmp.equals("back")) {
+                        System.out.println(YELLOW + "Returning to field selection." + RESET);
                         continue;
                     }
                     op = opTmp;
 
                     String opLabel = getOperatorLabel(op);
                     System.out.print("Enter search text for " + label + " (" + CYAN + opLabel + RESET
-                            + ", or '" + CMD_QUIT + "' to exit): ");
+                            + ", or '" + CMD_QUIT + "' to exit, '" + CMD_BACK + "' to go back): ");
                     value1 = readTrimmed();
                     if (value1.equalsIgnoreCase(CMD_QUIT)) {
                         System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
                         waitForEnter();
                         return;
+                    }
+                    if (value1.equalsIgnoreCase(CMD_BACK)) {
+                        System.out.println(YELLOW + "Returning to field selection for this condition." + RESET);
+                        continue;
                     }
                     if (value1.isEmpty()) {
                         System.out.println(RED + "Search text cannot be empty. Condition ignored." + RESET);
@@ -1522,9 +1531,8 @@ public class TesterMenu {
             }
 
             if (backToAdvancedMenu) {
-                // kullanıcı back ile hiç condition yokken çıktı veya 0 ile iptal etti
                 waitForEnter();
-                continue; // ADVANCED SEARCH ana menüsüne dön
+                continue;
             }
 
             if (count < 2) {
@@ -1703,7 +1711,6 @@ public class TesterMenu {
                 String choice = readTrimmed().toLowerCase();
 
                 if (choice.equals("a")) {
-                    // tekrar advanced search menüsüne dön
                     break;
                 } else if (choice.equals("s")) {
                     simpleSearch();
@@ -1820,8 +1827,6 @@ public class TesterMenu {
             return;
         }
 
-        // For textual fields, sort by LOWER(TRIM(field)) to avoid leading spaces & case
-        // issues
         String orderExpr = columnName;
         if (columnName.equals("first_name") ||
                 columnName.equals("last_name") ||
