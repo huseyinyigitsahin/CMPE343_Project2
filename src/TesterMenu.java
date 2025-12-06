@@ -13,18 +13,17 @@ import java.time.format.DateTimeParseException;
 public class TesterMenu {
 
     // ====== ANSI COLORS ======
-    protected static final String RESET  = "\u001B[0m";
-    protected static final String RED    = "\u001B[31m";
-    protected static final String GREEN  = "\u001B[32m";
+    protected static final String RESET = "\u001B[0m";
+    protected static final String RED = "\u001B[31m";
+    protected static final String GREEN = "\u001B[32m";
     protected static final String YELLOW = "\u001B[33m";
-    protected static final String CYAN   = "\u001B[36m";
+    protected static final String CYAN = "\u001B[36m";
 
     // Search input maximum length
     protected static final int MAX_SEARCH_LEN = 100;
 
     // One format for the whole contact table
-    protected static final String CONTACT_ROW_FORMAT =
-            "%-4s %-25s %-15s %-22s %-28s %-28s %-12s %-19s %-19s%n";
+    protected static final String CONTACT_ROW_FORMAT = "%-4s %-25s %-15s %-22s %-28s %-28s %-12s %-19s %-19s%n";
 
     // ====== FIELDS ======
     protected final String username;
@@ -36,10 +35,10 @@ public class TesterMenu {
 
     // ====== CONSTRUCTOR ======
     public TesterMenu(String username,
-                      String fullName,
-                      String role,
-                      Scanner scanner,
-                      String passwordStrengthAtLogin) {
+            String fullName,
+            String role,
+            Scanner scanner,
+            String passwordStrengthAtLogin) {
         this.username = trimOrEmpty(username);
         this.fullName = trimOrEmpty(fullName);
         this.role = trimOrEmpty(role);
@@ -112,9 +111,8 @@ public class TesterMenu {
     }
 
     protected void clearScreen() {
-        for (int i = 0; i < 50; i++) {
-            System.out.println();
-        }
+        System.out.print("\u001B[H\u001B[2J");
+        System.out.flush();
     }
 
     protected static String trimOrEmpty(String s) {
@@ -128,7 +126,8 @@ public class TesterMenu {
 
     protected String toLowerTr(String text) {
         text = trimOrEmpty(text);
-        if (text.isEmpty()) return "";
+        if (text.isEmpty())
+            return "";
         return text.toLowerCase(new java.util.Locale("tr", "TR"));
     }
 
@@ -136,20 +135,23 @@ public class TesterMenu {
         while (true) {
             System.out.print(YELLOW + "Press ENTER to continue: " + RESET);
             String input = scanner.nextLine();
-            if (trimOrEmpty(input).isEmpty()) return;
+            if (trimOrEmpty(input).isEmpty())
+                return;
             System.out.println(YELLOW + "Please press only ENTER. Do not type anything." + RESET);
         }
     }
 
     protected String normalizePhone(String raw) {
         raw = trimOrEmpty(raw);
-        if (raw.isEmpty()) return "";
+        if (raw.isEmpty())
+            return "";
         return raw.replaceAll("[^0-9]", "");
     }
 
     protected String loadRealFullName() {
         Connection con = getConnection();
-        if (con == null) return fullName;
+        if (con == null)
+            return fullName;
 
         String sql = "SELECT name, surname FROM users WHERE username = ?";
 
@@ -167,7 +169,10 @@ public class TesterMenu {
             }
         } catch (Exception ignored) {
         } finally {
-            try { con.close(); } catch (Exception ignored) {}
+            try {
+                con.close();
+            } catch (Exception ignored) {
+            }
         }
 
         return fullName;
@@ -196,34 +201,43 @@ public class TesterMenu {
 
     // Operator label for showing next to input
     protected String getOperatorLabel(String op) {
-        if (op == null) return "";
+        if (op == null)
+            return "";
         switch (op) {
-            case "starts":   return "STARTS WITH";
-            case "contains": return "CONTAINS";
-            case "equals":   return "EQUALS";
-            default:         return op.toUpperCase();
+            case "starts":
+                return "STARTS WITH";
+            case "contains":
+                return "CONTAINS";
+            case "equals":
+                return "EQUALS";
+            default:
+                return op.toUpperCase();
         }
     }
 
     // ====== VALIDATION HELPERS ======
     //
     // Name and surname:
-    //  - only letters allowed (English + Turkish),
-    //  - NO spaces,
-    //  - NO dot,
-    //  - NO digits, NO symbols.
+    // - only letters allowed (English + Turkish),
+    // - NO spaces,
+    // - NO dot,
+    // - NO digits, NO symbols.
     //
     protected boolean isValidName(String text) {
         text = trimOrEmpty(text);
-        if (text.isEmpty()) return false;
+        if (text.isEmpty())
+            return false;
         return text.matches("[A-Za-zÇĞİÖŞÜçğıöşü]+");
     }
 
-    // Nickname: Turkish letters, digits, underscore and dot allowed, no spaces, can be all digits
+    // Nickname: Turkish letters, digits, underscore and dot allowed, no spaces, can
+    // be all digits
     protected boolean isValidNickname(String text) {
         text = trimOrEmpty(text);
-        if (text.isEmpty()) return false;
-        if (text.contains(" ")) return false;
+        if (text.isEmpty())
+            return false;
+        if (text.contains(" "))
+            return false;
 
         return text.matches("[A-Za-zÇĞİÖŞÜçğıöşü0-9_.]+");
     }
@@ -231,7 +245,8 @@ public class TesterMenu {
     // Phone: exact 10 digits after normalization (for equals)
     protected boolean isValidPhoneExact(String raw) {
         raw = trimOrEmpty(raw);
-        if (raw.isEmpty()) return false;
+        if (raw.isEmpty())
+            return false;
         String digits = normalizePhone(raw);
         return digits.length() == 10 && digits.matches("\\d+");
     }
@@ -243,7 +258,8 @@ public class TesterMenu {
     // Find forbidden character in email
     protected char findForbiddenEmailChar(String email) {
         email = trimOrEmpty(email);
-        if (email.isEmpty()) return 0;
+        if (email.isEmpty())
+            return 0;
         String forbidden = "!?%^&*()=+{}[]|\"'<>,"; // common problematic ones
         for (int i = 0; i < email.length(); i++) {
             char c = email.charAt(i);
@@ -257,8 +273,10 @@ public class TesterMenu {
     // Email: basic format and limited domains (for equals)
     protected boolean isValidEmailForEquals(String email) {
         email = trimOrEmpty(email);
-        if (email.isEmpty()) return false;
-        if (email.contains(" ")) return false;
+        if (email.isEmpty())
+            return false;
+        if (email.contains(" "))
+            return false;
 
         String regex = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$";
         if (!email.matches(regex)) {
@@ -266,7 +284,8 @@ public class TesterMenu {
         }
 
         int atIndex = email.lastIndexOf('@');
-        if (atIndex < 0 || atIndex == email.length() - 1) return false;
+        if (atIndex < 0 || atIndex == email.length() - 1)
+            return false;
 
         String domain = email.substring(atIndex + 1).toLowerCase();
 
@@ -299,7 +318,8 @@ public class TesterMenu {
     // ====== PASSWORD HELPERS ======
 
     protected String hashPassword(String password) {
-        if (password == null) return "";
+        if (password == null)
+            return "";
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] hashBytes = md.digest(password.getBytes());
@@ -314,11 +334,12 @@ public class TesterMenu {
     }
 
     protected String evaluatePasswordStrength(String password) {
-        if (password == null) return "very_weak";
+        if (password == null)
+            return "very_weak";
 
         int length = password.length();
         boolean hasLetter = password.matches(".*[A-Za-z].*");
-        boolean hasDigit  = password.matches(".*[0-9].*");
+        boolean hasDigit = password.matches(".*[0-9].*");
         boolean hasSymbol = password.matches(".*[^A-Za-z0-9].*");
 
         if (length < 4) {
@@ -330,9 +351,12 @@ public class TesterMenu {
         }
 
         int score = 0;
-        if (hasLetter) score++;
-        if (hasDigit)  score++;
-        if (hasSymbol) score++;
+        if (hasLetter)
+            score++;
+        if (hasDigit)
+            score++;
+        if (hasSymbol)
+            score++;
 
         if (length >= 12 && score >= 2) {
             return "strong";
@@ -375,9 +399,9 @@ public class TesterMenu {
     }
 
     protected String generateStrongPasswordSuggestion() {
-        String upper   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        String lower   = "abcdefghijklmnopqrstuvwxyz";
-        String digits  = "0123456789";
+        String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String lower = "abcdefghijklmnopqrstuvwxyz";
+        String digits = "0123456789";
         String symbols = "!@#$%^&*()-_=+[]{}";
 
         String all = upper + lower + digits + symbols;
@@ -419,8 +443,7 @@ public class TesterMenu {
                 "LinkedIn",
                 "Birth Date",
                 "Created At",
-                "Updated At"
-        );
+                "Updated At");
         System.out.printf(CONTACT_ROW_FORMAT,
                 "----",
                 "-------------------------",
@@ -430,8 +453,7 @@ public class TesterMenu {
                 "----------------------------",
                 "------------",
                 "-------------------",
-                "-------------------"
-        );
+                "-------------------");
     }
 
     protected void printContactRow(ResultSet rs) throws SQLException {
@@ -460,7 +482,8 @@ public class TesterMenu {
             phones = phonePrimary;
         }
         if (!phoneSecondary.isEmpty()) {
-            if (!phones.isBlank()) phones += " / ";
+            if (!phones.isBlank())
+                phones += " / ";
             phones += phoneSecondary;
         }
 
@@ -473,8 +496,7 @@ public class TesterMenu {
                 linkedin,
                 birthDate,
                 createdAt,
-                updatedAt
-        );
+                updatedAt);
     }
 
     // ====== 1) CHANGE PASSWORD ======
@@ -489,7 +511,8 @@ public class TesterMenu {
 
         System.out.print("Current password: ");
         String currentPassword = scanner.nextLine();
-        if (currentPassword != null) currentPassword = currentPassword.trim();
+        if (currentPassword != null)
+            currentPassword = currentPassword.trim();
 
         if (currentPassword != null && currentPassword.equalsIgnoreCase("q")) {
             System.out.println(YELLOW + "Password change cancelled." + RESET);
@@ -546,7 +569,8 @@ public class TesterMenu {
             while (true) {
                 System.out.print("New password: ");
                 newPassword = scanner.nextLine();
-                if (newPassword != null) newPassword = newPassword.trim();
+                if (newPassword != null)
+                    newPassword = newPassword.trim();
 
                 if (newPassword != null && newPassword.equalsIgnoreCase("q")) {
                     System.out.println(YELLOW + "Password change cancelled." + RESET);
@@ -573,10 +597,13 @@ public class TesterMenu {
                 System.out.println("Password strength: " + YELLOW + strength.toUpperCase() + RESET);
 
                 if ("very_weak".equals(strength) || "weak".equals(strength)) {
-                    System.out.println(RED + "This password is not strong. Consider using the suggested strong password above." + RESET);
+                    System.out.println(
+                            RED + "This password is not strong. Consider using the suggested strong password above."
+                                    + RESET);
                 }
 
-                System.out.print("Do you want to use this password (" + GREEN + "y" + RESET + " / " + YELLOW + "n" + RESET + ", " + RED + "q" + RESET + " to cancel): ");
+                System.out.print("Do you want to use this password (" + GREEN + "y" + RESET + " / " + YELLOW + "n"
+                        + RESET + ", " + RED + "q" + RESET + " to cancel): ");
                 String choice = readTrimmed().toLowerCase();
 
                 if ("q".equals(choice)) {
@@ -594,7 +621,8 @@ public class TesterMenu {
 
             System.out.print("Confirm new password: ");
             String confirmPassword = scanner.nextLine();
-            if (confirmPassword != null) confirmPassword = confirmPassword.trim();
+            if (confirmPassword != null)
+                confirmPassword = confirmPassword.trim();
 
             if (confirmPassword != null && confirmPassword.equalsIgnoreCase("q")) {
                 System.out.println(YELLOW + "Password change cancelled." + RESET);
@@ -632,7 +660,10 @@ public class TesterMenu {
         } catch (SQLException e) {
             System.out.println(RED + "Something went wrong while changing your password. Please try again." + RESET);
         } finally {
-            try { con.close(); } catch (SQLException ignored) {}
+            try {
+                con.close();
+            } catch (SQLException ignored) {
+            }
         }
 
         waitForEnter();
@@ -654,7 +685,7 @@ public class TesterMenu {
         String sql = "SELECT * FROM contacts";
 
         try (PreparedStatement stmt = con.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+                ResultSet rs = stmt.executeQuery()) {
 
             boolean empty = true;
 
@@ -672,7 +703,10 @@ public class TesterMenu {
         } catch (Exception e) {
             System.out.println(RED + "Error while listing contacts: " + e.getMessage() + RESET);
         } finally {
-            try { con.close(); } catch (SQLException ignored) {}
+            try {
+                con.close();
+            } catch (SQLException ignored) {
+            }
         }
 
         waitForEnter();
@@ -817,31 +851,39 @@ public class TesterMenu {
                 System.out.println();
                 if (columnName.equals("first_name") || columnName.equals("last_name")) {
                     System.out.println(CYAN + "Format example:" + RESET + " Ahmet, Ece, Ali");
-                    System.out.println(YELLOW + "Rules:" + RESET + " only letters are allowed. No spaces, no digits, no symbols. Turkish letters are supported.");
+                    System.out.println(YELLOW + "Rules:" + RESET
+                            + " only letters are allowed. No spaces, no digits, no symbols. Turkish letters are supported.");
                 } else if (columnName.equals("nickname")) {
                     System.out.println(CYAN + "Format example:" + RESET + " ali_k, user.123");
-                    System.out.println(YELLOW + "Rules:" + RESET + " letters, digits, underscore and dot are allowed. No spaces.");
+                    System.out.println(
+                            YELLOW + "Rules:" + RESET + " letters, digits, underscore and dot are allowed. No spaces.");
                 } else if (columnName.equals("phone_primary")) {
                     if ("equals".equals(op)) {
                         System.out.println(CYAN + "Format example:" + RESET + " 5321112233");
-                        System.out.println(YELLOW + "Rules for EQUALS:" + RESET + " it must be exactly 10 digits after leading zero. Example: 5321112233.");
+                        System.out.println(YELLOW + "Rules for EQUALS:" + RESET
+                                + " it must be exactly 10 digits after leading zero. Example: 5321112233.");
                     } else {
                         System.out.println(CYAN + "Format examples:" + RESET + " 532, 53211");
-                        System.out.println(YELLOW + "Rules for STARTS WITH or CONTAINS:" + RESET + " you can type a part of the number. It must contain digits only, no letters.");
+                        System.out.println(YELLOW + "Rules for STARTS WITH or CONTAINS:" + RESET
+                                + " you can type a part of the number. It must contain digits only, no letters.");
                     }
                 } else if (columnName.equals("email")) {
                     if ("equals".equals(op)) {
                         System.out.println(CYAN + "Format examples:" + RESET + " user@gmail.com, test@outlook.com");
-                        System.out.println(YELLOW + "Rules for EQUALS:" + RESET + " must be a valid email with domain gmail.com, outlook.com, hotmail.com or yahoo.com. No spaces.");
+                        System.out.println(YELLOW + "Rules for EQUALS:" + RESET
+                                + " must be a valid email with domain gmail.com, outlook.com, hotmail.com or yahoo.com. No spaces.");
                     } else {
                         System.out.println(CYAN + "Format examples:" + RESET + " gmail.com, outlook.com, user@");
-                        System.out.println(YELLOW + "Rules for STARTS WITH or CONTAINS:" + RESET + " you can search a part of the email. No spaces and no forbidden characters.");
+                        System.out.println(YELLOW + "Rules for STARTS WITH or CONTAINS:" + RESET
+                                + " you can search a part of the email. No spaces and no forbidden characters.");
                     }
-                    System.out.println(YELLOW + "Forbidden characters in email:" + RESET + " ! ? % ^ & * ( ) = + { } [ ] | ' \" < > ,");
+                    System.out.println(YELLOW + "Forbidden characters in email:" + RESET
+                            + " ! ? % ^ & * ( ) = + { } [ ] | ' \" < > ,");
                 }
 
                 System.out.println();
-                System.out.println(YELLOW + "Maximum length for search text is " + MAX_SEARCH_LEN + " characters." + RESET);
+                System.out.println(
+                        YELLOW + "Maximum length for search text is " + MAX_SEARCH_LEN + " characters." + RESET);
                 System.out.println(YELLOW + "You can type 0 to go back." + RESET);
                 System.out.println();
 
@@ -880,7 +922,8 @@ public class TesterMenu {
                 if (columnName.equals("first_name") || columnName.equals("last_name")) {
                     if (!isValidName(keyword)) {
                         System.out.println(RED + "Invalid name format." + RESET);
-                        System.out.println(YELLOW + "Rules:" + RESET + " only letters are allowed. No spaces, no digits, no symbols. Turkish letters are supported.");
+                        System.out.println(YELLOW + "Rules:" + RESET
+                                + " only letters are allowed. No spaces, no digits, no symbols. Turkish letters are supported.");
                         if (askRetryOrBack()) {
                             continue;
                         } else {
@@ -891,7 +934,8 @@ public class TesterMenu {
                 } else if (columnName.equals("nickname")) {
                     if (!isValidNickname(keyword)) {
                         System.out.println(RED + "Invalid nickname format." + RESET);
-                        System.out.println(YELLOW + "Rules:" + RESET + " letters, digits, underscore and dot are allowed. No spaces.");
+                        System.out.println(YELLOW + "Rules:" + RESET
+                                + " letters, digits, underscore and dot are allowed. No spaces.");
                         if (askRetryOrBack()) {
                             continue;
                         } else {
@@ -923,7 +967,8 @@ public class TesterMenu {
                     if ("equals".equals(op)) {
                         if (!isValidEmailForEquals(keyword)) {
                             System.out.println(RED + "Invalid email format for equals." + RESET);
-                            System.out.println(YELLOW + "Rules:" + RESET + " must look like user@gmail.com and domain must be gmail.com, outlook.com, hotmail.com or yahoo.com. No spaces.");
+                            System.out.println(YELLOW + "Rules:" + RESET
+                                    + " must look like user@gmail.com and domain must be gmail.com, outlook.com, hotmail.com or yahoo.com. No spaces.");
                             if (askRetryOrBack()) {
                                 continue;
                             } else {
@@ -937,7 +982,8 @@ public class TesterMenu {
                     if ("equals".equals(op)) {
                         if (!isValidPhoneExact(keyword)) {
                             System.out.println(RED + "Invalid phone format for equals." + RESET);
-                            System.out.println(YELLOW + "Rules:" + RESET + " after removing spaces and symbols it must contain exactly 10 digits. Example: 5321112233.");
+                            System.out.println(YELLOW + "Rules:" + RESET
+                                    + " after removing spaces and symbols it must contain exactly 10 digits. Example: 5321112233.");
                             if (askRetryOrBack()) {
                                 continue;
                             } else {
@@ -965,7 +1011,9 @@ public class TesterMenu {
                             }
                         }
                         if (digits.length() > 10) {
-                            System.out.println(RED + "Phone number is too long. Maximum 10 digits after leading zero are used in this system." + RESET);
+                            System.out.println(RED
+                                    + "Phone number is too long. Maximum 10 digits after leading zero are used in this system."
+                                    + RESET);
                             if (askRetryOrBack()) {
                                 continue;
                             } else {
@@ -1041,7 +1089,10 @@ public class TesterMenu {
                     System.out.println(RED + "Error while searching contacts: " + e.getMessage() + RESET);
                     waitForEnter();
                 } finally {
-                    try { con.close(); } catch (Exception ignored) {}
+                    try {
+                        con.close();
+                    } catch (Exception ignored) {
+                    }
                 }
 
                 while (true) {
@@ -1102,7 +1153,7 @@ public class TesterMenu {
         int matchedCount = 0;
 
         try (PreparedStatement stmt = con.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+                ResultSet rs = stmt.executeQuery()) {
 
             clearScreen();
             System.out.println(CYAN + "=== ADVANCED SEARCH QUICK FILTER RESULTS ===" + RESET);
@@ -1122,7 +1173,10 @@ public class TesterMenu {
             System.out.println(RED + "Error while running quick filter: " + e.getMessage() + RESET);
             waitForEnter();
         } finally {
-            try { con.close(); } catch (SQLException ignored) {}
+            try {
+                con.close();
+            } catch (SQLException ignored) {
+            }
         }
     }
 
@@ -1192,10 +1246,10 @@ public class TesterMenu {
             System.out.println();
 
             String[] columns = new String[2];
-            String[] labels  = new String[2];
-            String[] ops     = new String[2];
-            String[] val1    = new String[2];
-            String[] val2    = new String[2];
+            String[] labels = new String[2];
+            String[] ops = new String[2];
+            String[] val1 = new String[2];
+            String[] val2 = new String[2];
 
             int count = 0;
 
@@ -1273,7 +1327,8 @@ public class TesterMenu {
                         System.out.print("Enter exact birth date YYYY-MM-DD: ");
                         value1 = readTrimmed();
                         if (!isValidExactDate(value1)) {
-                            System.out.println(RED + "Invalid date format or future date. Example: 1995-04-23." + RESET);
+                            System.out
+                                    .println(RED + "Invalid date format or future date. Example: 1995-04-23." + RESET);
                             continue;
                         }
                     } else if ("2".equals(dateMode)) {
@@ -1285,7 +1340,8 @@ public class TesterMenu {
                         }
                         int monthNum = parseMonthToInt(monthInput);
                         if (monthNum == -1) {
-                            System.out.println(RED + "Invalid month. Please enter 1-12 or a valid month name like november." + RESET);
+                            System.out.println(RED
+                                    + "Invalid month. Please enter 1-12 or a valid month name like november." + RESET);
                             continue;
                         }
                         op = "month";
@@ -1346,7 +1402,8 @@ public class TesterMenu {
                     } else if (columnName.equals("first_name") || columnName.equals("last_name")) {
                         if (!isValidName(value1)) {
                             System.out.println(RED + "Invalid name format. Condition ignored." + RESET);
-                            System.out.println(YELLOW + "Rules:" + RESET + " only letters are allowed. No spaces, no digits, no symbols. Turkish letters are supported.");
+                            System.out.println(YELLOW + "Rules:" + RESET
+                                    + " only letters are allowed. No spaces, no digits, no symbols. Turkish letters are supported.");
                             continue;
                         }
                     } else if (columnName.equals("nickname")) {
@@ -1358,10 +1415,10 @@ public class TesterMenu {
                 }
 
                 columns[count] = columnName;
-                labels[count]  = label;
-                ops[count]     = op;
-                val1[count]    = value1;
-                val2[count]    = value2;
+                labels[count] = label;
+                ops[count] = op;
+                val1[count] = value1;
+                val2[count] = value2;
                 count++;
 
                 System.out.println(GREEN + "Filter added. Currently selected: " + count + RESET);
@@ -1369,11 +1426,14 @@ public class TesterMenu {
 
             if (count < 2) {
                 System.out.println();
-                System.out.println(RED + "Advanced search requires at least 2 fields. You selected " + count + "." + RESET);
+                System.out.println(
+                        RED + "Advanced search requires at least 2 fields. You selected " + count + "." + RESET);
 
                 if (count == 1) {
                     System.out.println();
-                    System.out.println(CYAN + "You have only one condition. For single field searches, SIMPLE SEARCH is better." + RESET);
+                    System.out.println(
+                            CYAN + "You have only one condition. For single field searches, SIMPLE SEARCH is better."
+                                    + RESET);
                     System.out.print(YELLOW + "Do you want to go to SIMPLE SEARCH menu now (y or n): " + RESET);
                     String goSimple = readTrimmed().toLowerCase();
                     if (goSimple.equals("y") || goSimple.equals("yes")) {
@@ -1477,7 +1537,10 @@ public class TesterMenu {
                 System.out.println(RED + "Error while performing advanced search: " + e.getMessage() + RESET);
                 waitForEnter();
             } finally {
-                try { con.close(); } catch (Exception ignored) {}
+                try {
+                    con.close();
+                } catch (Exception ignored) {
+                }
             }
 
             while (true) {
@@ -1507,23 +1570,38 @@ public class TesterMenu {
         String t = trimOrEmpty(raw).toLowerCase();
         try {
             int m = Integer.parseInt(t);
-            if (m >= 1 && m <= 12) return m;
-        } catch (NumberFormatException ignored) {}
+            if (m >= 1 && m <= 12)
+                return m;
+        } catch (NumberFormatException ignored) {
+        }
 
         switch (t) {
-            case "january":   return 1;
-            case "february":  return 2;
-            case "march":     return 3;
-            case "april":     return 4;
-            case "may":       return 5;
-            case "june":      return 6;
-            case "july":      return 7;
-            case "august":    return 8;
-            case "september": return 9;
-            case "october":   return 10;
-            case "november":  return 11;
-            case "december":  return 12;
-            default:          return -1; // invalid month
+            case "january":
+                return 1;
+            case "february":
+                return 2;
+            case "march":
+                return 3;
+            case "april":
+                return 4;
+            case "may":
+                return 5;
+            case "june":
+                return 6;
+            case "july":
+                return 7;
+            case "august":
+                return 8;
+            case "september":
+                return 9;
+            case "october":
+                return 10;
+            case "november":
+                return 11;
+            case "december":
+                return 12;
+            default:
+                return -1; // invalid month
         }
     }
 
@@ -1571,7 +1649,8 @@ public class TesterMenu {
                 return;
         }
 
-        System.out.print("Order " + GREEN + "A" + RESET + " for ascending, " + YELLOW + "D" + RESET + " for descending: ");
+        System.out.print(
+                "Order " + GREEN + "A" + RESET + " for ascending, " + YELLOW + "D" + RESET + " for descending: ");
         String orderInput = readTrimmed();
         String order;
 
@@ -1588,12 +1667,13 @@ public class TesterMenu {
             return;
         }
 
-        // For textual fields, sort by LOWER(TRIM(field)) to avoid leading spaces & case issues
+        // For textual fields, sort by LOWER(TRIM(field)) to avoid leading spaces & case
+        // issues
         String orderExpr = columnName;
         if (columnName.equals("first_name") ||
-            columnName.equals("last_name")  ||
-            columnName.equals("email")      ||
-            columnName.equals("nickname")) {
+                columnName.equals("last_name") ||
+                columnName.equals("email") ||
+                columnName.equals("nickname")) {
             orderExpr = "LOWER(TRIM(" + columnName + "))";
         }
 
@@ -1602,10 +1682,11 @@ public class TesterMenu {
         int count = 0;
 
         try (PreparedStatement stmt = con.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+                ResultSet rs = stmt.executeQuery()) {
 
             clearScreen();
-            System.out.println(CYAN + "=== SORTED CONTACTS (" + columnName.toUpperCase() + " " + order + ") ===" + RESET);
+            System.out
+                    .println(CYAN + "=== SORTED CONTACTS (" + columnName.toUpperCase() + " " + order + ") ===" + RESET);
             printContactHeader();
 
             while (rs.next()) {
@@ -1620,7 +1701,10 @@ public class TesterMenu {
         } catch (Exception e) {
             System.out.println(RED + "Error while sorting contacts: " + e.getMessage() + RESET);
         } finally {
-            try { con.close(); } catch (SQLException ignored) {}
+            try {
+                con.close();
+            } catch (SQLException ignored) {
+            }
         }
 
         waitForEnter();

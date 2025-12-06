@@ -59,8 +59,8 @@ public class LoginScreen {
         System.out.println(YELLOW + "            Welcome to the CMPE 343 Course Project!             " + RESET);
         System.out.println(BLUE + "========================================================================" + RESET);
         System.out.println();
-        System.out.println(CYAN + "      Project by: MERT FAHRI CAKAR, BURAK ARSLAN," + RESET);
-        System.out.println(CYAN + "      NERMIN ZEHRA SIPAHIOGLU, HUSEYIN YIGIT SAHIN" + RESET);
+        System.out.println(CYAN + "      Project by: MERT FAHRİ ÇAKAR, BURAK ARSLAN," + RESET);
+        System.out.println(CYAN + "      NERMİN ZEHRA SİPAHİOĞLU, HUSEYİN YİĞİT SAHİN" + RESET);
         System.out.println();
 
         System.out.print(YELLOW + "Press ENTER to continue..." + RESET);
