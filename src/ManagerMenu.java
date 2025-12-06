@@ -5,6 +5,14 @@ import java.sql.SQLException;
 import java.util.Scanner;
 import java.util.Stack;
 
+/**
+ * Represents the menu interface specifically designed for the Manager role.
+ * <p>
+ * This class extends {@link TesterMenu} and provides administrative functionalities
+ * such as creating, updating, listing, and deleting users. It also includes 
+ * statistical reporting for contacts and an undo mechanism for user management actions.
+ * </p>
+ */
 public class ManagerMenu extends TesterMenu {
 
     private static final int MAX_USERNAME_LEN = 50;
@@ -12,13 +20,33 @@ public class ManagerMenu extends TesterMenu {
     private static final int MAX_SURNAME_LEN = 50;
     private static final int MAX_PASSWORD_LEN = 50;
 
+    /**
+     * A stack used to store snapshots of user data to facilitate undo operations
+     * for Add, Update, and Delete actions.
+     */
     private final Stack<UserSnapshot> undoUserStack;
 
+    /**
+     * Constructs a new ManagerMenu instance.
+     *
+     * @param username                The username of the currently logged-in manager.
+     * @param fullName                The full name of the currently logged-in manager.
+     * @param role                    The role of the user (expected to be "Manager").
+     * @param scanner                 The shared Scanner instance for user input.
+     * @param passwordStrengthAtLogin The strength evaluation of the manager's current password.
+     */
     public ManagerMenu(String username, String fullName, String role, Scanner scanner, String passwordStrengthAtLogin) {
         super(username, fullName, role, scanner, passwordStrengthAtLogin);
         this.undoUserStack = new Stack<>();
     }
 
+    /**
+     * Displays the main menu loop for the Manager.
+     * <p>
+     * Provides options to change password, list users, add users, update users,
+     * delete users, view statistics, undo the last action, or logout.
+     * </p>
+     */
     @Override
     public void showMenu() {
         while (true) {
@@ -88,13 +116,27 @@ public class ManagerMenu extends TesterMenu {
         }
     }
 
-    // ============================= SMALL HELPERS =============================
-
+    /**
+     * Checks if the provided input string matches standard cancellation keywords.
+     *
+     * @param in The user input string.
+     * @return true if the input is "q", "quit", or "exit" (case-insensitive); false otherwise.
+     */
     private boolean isCancelKeyword(String in) {
         String t = (in == null ? "" : in.trim()).toLowerCase();
         return t.equals("q") || t.equals("quit") || t.equals("exit");
     }
 
+    /**
+     * Validates if the username meets format requirements.
+     * <p>
+     * Allowed characters: Letters (including Turkish), digits, underscore, and dot.
+     * Spaces are not allowed.
+     * </p>
+     *
+     * @param text The username to validate.
+     * @return true if valid, false otherwise.
+     */
     private boolean isValidUsernameFormat(String text) {
         if (text == null)
             return false;
@@ -105,11 +147,19 @@ public class ManagerMenu extends TesterMenu {
             return false;
         if (text.contains(" "))
             return false;
-        // letters (with Turkish), digits, underscore, dot
         return text.matches("[A-Za-zÇĞİÖŞÜçğıöşü0-9_.]+");
     }
 
-    // Name / surname: only letters (Turkish), no space, no digit, no symbol
+    /**
+     * Validates if a name or surname contains only alphabetic characters.
+     * <p>
+     * Allows Turkish characters but disallows spaces, digits, and special symbols.
+     * </p>
+     *
+     * @param text   The name or surname text to validate.
+     * @param maxLen The maximum allowed length for the text.
+     * @return true if valid, false otherwise.
+     */
     private boolean isValidPureName(String text, int maxLen) {
         if (text == null)
             return false;
@@ -121,7 +171,11 @@ public class ManagerMenu extends TesterMenu {
         return text.matches("[A-Za-zÇĞİÖŞÜçğıöşü]+");
     }
 
-    // Kullanıcıya "retry mi back mi?" soran helper
+    /**
+     * Prompts the user to decide whether to retry an operation or go back.
+     *
+     * @return true if the user wants to retry, false if they want to cancel/go back.
+     */
     private boolean askRetry() {
         while (true) {
             System.out.print("Would you like to try again? (Y/N): ");
@@ -136,8 +190,11 @@ public class ManagerMenu extends TesterMenu {
         }
     }
 
-    // ============================= LIST USERS =============================
-
+    /**
+     * Retrieves and displays a list of all users from the database.
+     *
+     * @param pause If true, prompts the user to press Enter before returning.
+     */
     private void handleListUsers(boolean pause) {
         clearScreen();
         System.out.println(CYAN + "=== USER LIST ===" + RESET);
@@ -201,9 +258,14 @@ public class ManagerMenu extends TesterMenu {
             waitForEnter();
     }
 
-    // ============================= ADD USER (VALIDATION + UNDO + PW STRENGTH)
-    // =============================
-
+    /**
+     * Handles the process of adding a new user to the system.
+     * <p>
+     * Includes validation for username, name, and surname formats. Checks password strength,
+     * hashes the password, inserts the user into the database, and pushes the action to
+     * the undo stack.
+     * </p>
+     */
     private void handleAddUser() {
         clearScreen();
         System.out.println(CYAN + "=== ADD NEW USER ===" + RESET);
@@ -215,7 +277,6 @@ public class ManagerMenu extends TesterMenu {
         System.out.println(YELLOW + "Max length: username/name/surname/password = 50 characters." + RESET);
         System.out.println();
 
-        // ---------- USERNAME ----------
         String newUsername;
         while (true) {
             System.out.print("Username: ");
@@ -232,7 +293,6 @@ public class ManagerMenu extends TesterMenu {
             break;
         }
 
-        // ---------- NAME ----------
         String name;
         while (true) {
             System.out.print("Name: ");
@@ -249,7 +309,6 @@ public class ManagerMenu extends TesterMenu {
             break;
         }
 
-        // ---------- SURNAME ----------
         String surname;
         while (true) {
             System.out.print("Surname: ");
@@ -266,7 +325,6 @@ public class ManagerMenu extends TesterMenu {
             break;
         }
 
-        // ---------- ROLE ----------
         String roleStr = selectRole();
         if (roleStr == null) {
             System.out.println(YELLOW + "Operation cancelled." + RESET);
@@ -274,9 +332,7 @@ public class ManagerMenu extends TesterMenu {
             return;
         }
 
-        // ---------- PASSWORD + STRENGTH + SUGGESTION ----------
         String password;
-
         String suggestedPassword = generateStrongPasswordSuggestion();
         System.out.println();
         System.out.println("Here is a strong password suggestion (optional):");
@@ -430,8 +486,13 @@ public class ManagerMenu extends TesterMenu {
         }
     }
 
-    // ============================= UPDATE USER =============================
-
+    /**
+     * Handles the modification of an existing user's details.
+     * <p>
+     * Allows updating username, name, surname, and role. Also provides an option to
+     * reset the user's password. The state before update is saved for undo functionality.
+     * </p>
+     */
     private void handleUpdateUser() {
         while (true) {
             clearScreen();
@@ -632,6 +693,15 @@ public class ManagerMenu extends TesterMenu {
         }
     }
 
+    /**
+     * Resets the password for a specific user.
+     * <p>
+     * Prompts for a new password, validates it, hashes it, and updates the database.
+     * </p>
+     *
+     * @param outerCon The active database connection to use for the update.
+     * @param userId   The ID of the user whose password is being reset.
+     */
     private void resetUserPassword(Connection outerCon, int userId) {
         System.out.println();
         System.out.println(CYAN + "=== RESET USER PASSWORD ===" + RESET);
@@ -684,9 +754,13 @@ public class ManagerMenu extends TesterMenu {
         }
     }
 
-    // ============================= DELETE USER (UNDO DESTEKLİ)
-    // =============================
-
+    /**
+     * Handles the deletion of a user from the system.
+     * <p>
+     * Validates the ID, prevents the currently logged-in manager from deleting themselves,
+     * creates a backup snapshot for undo, and executes the deletion.
+     * </p>
+     */
     private void handleDeleteUser() {
         while (true) {
             clearScreen();
@@ -818,9 +892,12 @@ public class ManagerMenu extends TesterMenu {
         }
     }
 
-    // ============================= UNDO (ADD / UPDATE / DELETE)
-    // =============================
-
+    /**
+     * Undoes the last performed user management action (Add, Update, or Delete).
+     * <p>
+     * Pops the last snapshot from the undo stack and performs the reverse database operation.
+     * </p>
+     */
     private void handleUndoManager() {
         clearScreen();
         System.out.println(CYAN + "=== UNDO LAST USER ACTION ===" + RESET);
@@ -891,8 +968,19 @@ public class ManagerMenu extends TesterMenu {
         waitForEnter();
     }
 
-    // ============================= CONTACT STATS =============================
-
+    /**
+     * Calculates and displays statistical information regarding contacts.
+     * <p>
+     * Statistics include:
+     * <ul>
+     * <li>Top 5 most frequent first names.</li>
+     * <li>Top 5 most frequent surnames.</li>
+     * <li>Top 5 email providers (domains).</li>
+     * <li>Count of contacts with and without LinkedIn URLs.</li>
+     * <li>Age statistics (oldest, youngest, average) based on birth dates.</li>
+     * </ul>
+     * </p>
+     */
     private void handleContactsStatistics() {
         clearScreen();
         System.out.println(CYAN + "=== CONTACTS STATISTICAL INFO ===" + RESET);
@@ -1020,8 +1108,12 @@ public class ManagerMenu extends TesterMenu {
         waitForEnter();
     }
 
-    // ============================= ROLE SELECTION =============================
-
+    /**
+     * Helper method to display a role selection menu and get user input.
+     *
+     * @return The string representation of the selected role ("Tester", "Junior Developer", etc.),
+     * or null if the user cancels.
+     */
     private String selectRole() {
         while (true) {
             System.out.println();
@@ -1049,10 +1141,12 @@ public class ManagerMenu extends TesterMenu {
         }
     }
 
-    // ============================= SNAPSHOT CLASS =============================
-
+    /**
+     * A Data Transfer Object (DTO) class representing a snapshot of a user's state.
+     * Used for undo functionality to restore previous states or reverse actions.
+     */
     private static class UserSnapshot {
-        String actionType; // ADD / UPDATE / DELETE
+        String actionType;
         int user_id;
         String username;
         String password_hash;
@@ -1060,6 +1154,17 @@ public class ManagerMenu extends TesterMenu {
         String surname;
         String role;
 
+        /**
+         * Creates a snapshot of user data.
+         *
+         * @param actionType    The type of action performed (ADD, UPDATE, DELETE).
+         * @param user_id       The unique ID of the user.
+         * @param username      The username.
+         * @param password_hash The hashed password.
+         * @param name          The first name.
+         * @param surname       The last name.
+         * @param role          The user's role.
+         */
         public UserSnapshot(String actionType, int user_id, String username, String password_hash, String name,
                 String surname, String role) {
             this.actionType = actionType;

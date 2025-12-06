@@ -5,6 +5,14 @@ import java.sql.SQLException;
 import java.util.Scanner;
 import java.util.Stack;
 
+/**
+ * Represents the menu interface specifically designed for the Junior Developer role.
+ * <p>
+ * This class extends the functionality of {@link TesterMenu} by adding the ability to
+ * update existing contact information and undo those updates. It enforces data validation
+ * rules during the update process to ensure database integrity.
+ * </p>
+ */
 public class JuniorDevMenu extends TesterMenu {
 
     private static final int MAX_NAME_LEN = 50;
@@ -13,19 +21,38 @@ public class JuniorDevMenu extends TesterMenu {
     private static final int MAX_LINKEDIN_LEN = 100;
     private static final int PHONE_LEN = 10;
 
+    /**
+     * A stack used to store the history of update actions, enabling the undo functionality.
+     */
     protected Stack<UndoAction> undoStack;
 
+    /**
+     * Constructs a new JuniorDevMenu instance.
+     *
+     * @param username         The username of the currently logged-in user.
+     * @param fullName         The full name of the user.
+     * @param role             The role of the user (expected to be "Junior Developer").
+     * @param scanner          The shared Scanner instance for user input.
+     * @param passwordStrength The strength evaluation of the user's current password.
+     */
     public JuniorDevMenu(String username, String fullName, String role, Scanner scanner, String passwordStrength) {
         super(username, fullName, role, scanner, passwordStrength);
         this.undoStack = new Stack<>();
     }
 
+    /**
+     * Displays the main menu loop for the Junior Developer.
+     * <p>
+     * Provides options inherited from Tester (List, Search, Sort) plus
+     * specific options to Update contacts and Undo the last update.
+     * </p>
+     */
     @Override
     public void showMenu() {
         while (true) {
             clearScreen();
             String realFullName = loadRealFullName();
-            
+
             System.out.println(CYAN + "=== JUNIOR DEVELOPER MENU ===" + RESET);
             System.out.println(GREEN + "User: " + RESET + realFullName + " (" + username + ")");
             System.out.println(GREEN + "Role: " + RESET + role);
@@ -59,12 +86,24 @@ public class JuniorDevMenu extends TesterMenu {
 
             try {
                 switch (choice) {
-                    case 1: handleChangePassword(); break;
-                    case 2: handleListContacts(); break;
-                    case 3: handleSearchContacts(); break;
-                    case 4: handleSortContacts(); break;
-                    case 5: handleUpdateContact(); break;
-                    case 6: handleUndo(); break;
+                    case 1:
+                        handleChangePassword();
+                        break;
+                    case 2:
+                        handleListContacts();
+                        break;
+                    case 3:
+                        handleSearchContacts();
+                        break;
+                    case 4:
+                        handleSortContacts();
+                        break;
+                    case 5:
+                        handleUpdateContact();
+                        break;
+                    case 6:
+                        handleUndo();
+                        break;
                     case 7:
                         System.out.println(YELLOW + "Logging out..." + RESET);
                         return;
@@ -79,19 +118,33 @@ public class JuniorDevMenu extends TesterMenu {
         }
     }
 
+    /**
+     * Manages the workflow for updating a specific field of an existing contact.
+     * <p>
+     * This method:
+     * <ol>
+     * <li>Lists contacts to allow ID selection.</li>
+     * <li>Prompts the user to select a field to update (e.g., Name, Phone, Email).</li>
+     * <li>Validates the new input according to specific rules (e.g., regex for phones, forbidden chars for email).</li>
+     * <li>Updates the database if validation passes.</li>
+     * <li>Saves the previous state to the undo stack.</li>
+     * </ol>
+     * </p>
+     */
     protected void handleUpdateContact() {
         outerLoop: while (true) {
             clearScreen();
             System.out.println(CYAN + "=== UPDATE CONTACT ===" + RESET);
-            
-            handleListContactsForUpdate(); 
+
+            handleListContactsForUpdate();
 
             System.out.println();
             System.out.println(YELLOW + "Enter 'q' to return to Main Menu." + RESET);
             System.out.print("Enter ID of contact to update: ");
             String idInput = scanner.nextLine().trim();
-            
-            if (idInput.equalsIgnoreCase("q")) return;
+
+            if (idInput.equalsIgnoreCase("q"))
+                return;
 
             int contactId;
             try {
@@ -99,7 +152,7 @@ public class JuniorDevMenu extends TesterMenu {
             } catch (NumberFormatException e) {
                 System.out.println(RED + "Invalid ID format. Please enter a number." + RESET);
                 waitForEnter();
-                continue outerLoop; 
+                continue outerLoop;
             }
 
             if (contactId <= 0) {
@@ -125,19 +178,19 @@ public class JuniorDevMenu extends TesterMenu {
                 System.out.println(GREEN + "9)" + RESET + " Birth Date");
                 System.out.println(GREEN + "0)" + RESET + " Back to Main Menu");
                 System.out.print(YELLOW + "Select (0-9): " + RESET);
-                
+
                 String fieldChoice = scanner.nextLine().trim();
 
                 if (fieldChoice.equals("0") || fieldChoice.equalsIgnoreCase("q")) {
-                    return; 
+                    return;
                 }
 
                 String columnName = "";
                 String newValue = "";
-                
+
                 while (true) {
-                    System.out.println(); 
-                    
+                    System.out.println();
+
                     switch (fieldChoice) {
                         case "1":
                             columnName = "first_name";
@@ -190,7 +243,7 @@ public class JuniorDevMenu extends TesterMenu {
                         default:
                             System.out.println(RED + "Invalid selection. Please try again." + RESET);
                             waitForEnter();
-                            continue innerLoop; 
+                            continue innerLoop;
                     }
 
                     System.out.print(YELLOW + "Enter new value (or 'q' to cancel): " + RESET);
@@ -198,13 +251,13 @@ public class JuniorDevMenu extends TesterMenu {
 
                     if (newValue.equalsIgnoreCase("q")) {
                         System.out.println(YELLOW + "Operation cancelled." + RESET);
-                        continue innerLoop; 
+                        continue innerLoop;
                     }
 
                     boolean hasError = false;
 
-                    if ((columnName.equals("first_name") || columnName.equals("last_name") || 
-                         columnName.equals("phone_primary") || columnName.equals("email")) && newValue.isEmpty()) {
+                    if ((columnName.equals("first_name") || columnName.equals("last_name") ||
+                            columnName.equals("phone_primary") || columnName.equals("email")) && newValue.isEmpty()) {
                         System.out.println(RED + ">> Error: This field cannot be empty!" + RESET);
                         hasError = true;
                     }
@@ -235,35 +288,36 @@ public class JuniorDevMenu extends TesterMenu {
                         }
                     }
 
-                    // --- EMAIL CHECK (Senior ile aynı) ---
                     if (!hasError && columnName.equals("email")) {
                         char bad = findForbiddenEmailChar(newValue);
                         if (bad != 0) {
-                            System.out.println(RED + ">> Error: You cannot use the character '" + bad + "' in email." + RESET);
+                            System.out.println(
+                                    RED + ">> Error: You cannot use the character '" + bad + "' in email." + RESET);
                             hasError = true;
                         } else if (!isValidEmailForEquals(newValue)) {
                             System.out.println(RED + ">> Error: Invalid email format or unsupported domain." + RESET);
-                            System.out.println(YELLOW + "Supported domains: gmail.com, outlook.com, hotmail.com, yahoo.com" + RESET);
+                            System.out.println(YELLOW
+                                    + "Supported domains: gmail.com, outlook.com, hotmail.com, yahoo.com" + RESET);
                             hasError = true;
                         }
                     }
 
-                    // --- LINKEDIN CHECK (Username only + append logic) ---
                     if (!hasError && columnName.equals("linkedin_url")) {
                         if (!newValue.isEmpty()) {
-                            if (newValue.startsWith("http://") || newValue.startsWith("https://") || newValue.startsWith("www.")) {
-                                System.out.println(RED + ">> Error: Do NOT type the full URL. Only username is required." + RESET);
+                            if (newValue.startsWith("http://") || newValue.startsWith("https://")
+                                    || newValue.startsWith("www.")) {
+                                System.out.println(
+                                        RED + ">> Error: Do NOT type the full URL. Only username is required." + RESET);
                                 hasError = true;
                             } else if (newValue.contains(" ")) {
                                 System.out.println(RED + ">> Error: Username cannot contain spaces." + RESET);
                                 hasError = true;
                             } else {
-                                // Validasyon geçerse DB'ye yazmadan önce formatla
                                 newValue = "linkedin.com/in/" + newValue;
                             }
                         }
                     }
-                    
+
                     if (!hasError && columnName.equals("birth_date") && !newValue.isEmpty()) {
                         if (!isValidExactDate(newValue)) {
                             System.out.println(RED + ">> Error: Invalid date. Use YYYY-MM-DD." + RESET);
@@ -273,7 +327,7 @@ public class JuniorDevMenu extends TesterMenu {
 
                     if (hasError) {
                         System.out.println(YELLOW + "Please try again observing the rules above." + RESET);
-                        continue; 
+                        continue;
                     }
 
                     break;
@@ -297,7 +351,8 @@ public class JuniorDevMenu extends TesterMenu {
                         ResultSet rs = selectStmt.executeQuery();
                         if (rs.next()) {
                             oldValue = rs.getString(columnName);
-                            if (oldValue == null) oldValue = ""; 
+                            if (oldValue == null)
+                                oldValue = "";
                             idExists = true;
                         }
                     }
@@ -305,27 +360,27 @@ public class JuniorDevMenu extends TesterMenu {
                     if (!idExists) {
                         System.out.println(RED + "Contact ID not found." + RESET);
                         waitForEnter();
-                        continue outerLoop; 
+                        continue outerLoop;
                     }
 
                     String updateSql = "UPDATE contacts SET " + columnName + " = ? WHERE contact_id = ?";
                     try (PreparedStatement updateStmt = con.prepareStatement(updateSql)) {
                         if (newValue.isEmpty() && columnName.equals("birth_date")) {
-                             updateStmt.setNull(1, java.sql.Types.DATE);
+                            updateStmt.setNull(1, java.sql.Types.DATE);
                         } else {
-                             updateStmt.setString(1, newValue);
+                            updateStmt.setString(1, newValue);
                         }
-                        
+
                         updateStmt.setInt(2, contactId);
 
                         int rows = updateStmt.executeUpdate();
                         if (rows > 0) {
                             System.out.println(GREEN + "Contact updated successfully!" + RESET);
                             undoStack.push(new UndoAction(contactId, columnName, oldValue));
-                            
+
                             System.out.println("Updated Row:");
                             printSingleContact(con, contactId);
-                            
+
                             updateSuccess = true;
                         } else {
                             System.out.println(YELLOW + "No changes applied." + RESET);
@@ -338,9 +393,12 @@ public class JuniorDevMenu extends TesterMenu {
                     waitForEnter();
                     continue innerLoop;
                 } finally {
-                    try { con.close(); } catch (SQLException ignored) {}
+                    try {
+                        con.close();
+                    } catch (SQLException ignored) {
+                    }
                 }
-                
+
                 if (updateSuccess) {
                     System.out.println();
                     System.out.println(CYAN + "What would you like to do next?" + RESET);
@@ -349,26 +407,36 @@ public class JuniorDevMenu extends TesterMenu {
                     System.out.println("3. Undo this update");
                     System.out.println("4. Return to Main Menu");
                     System.out.print("Select (1-4): ");
-                    
+
                     String nextAction = scanner.nextLine().trim();
-                    
+
                     if (nextAction.equals("1")) {
-                        continue innerLoop; 
+                        continue innerLoop;
                     } else if (nextAction.equals("2")) {
-                        continue outerLoop; 
+                        continue outerLoop;
                     } else if (nextAction.equals("3")) {
-                        handleUndo(); 
-                        continue innerLoop; 
+                        handleUndo();
+                        continue innerLoop;
                     } else {
-                        return; 
+                        return;
                     }
                 } else {
-                    if (askRetry()) continue innerLoop; else return;
+                    if (askRetry())
+                        continue innerLoop;
+                    else
+                        return;
                 }
             }
         }
     }
 
+    /**
+     * Reverts the most recent contact update operation.
+     * <p>
+     * Retrieves the last {@link UndoAction} from the stack and restores the
+     * database record to its previous value.
+     * </p>
+     */
     protected void handleUndo() {
         clearScreen();
         System.out.println(CYAN + "=== UNDO LAST UPDATE ===" + RESET);
@@ -426,6 +494,9 @@ public class JuniorDevMenu extends TesterMenu {
         waitForEnter();
     }
 
+    /**
+     * Lists all contacts in the database to assist the user in identifying which contact ID to update.
+     */
     protected void handleListContactsForUpdate() {
         Connection con = getConnection();
         if (con == null)
@@ -445,6 +516,12 @@ public class JuniorDevMenu extends TesterMenu {
         }
     }
 
+    /**
+     * Fetches and displays a single contact's details from the database.
+     *
+     * @param con The active database connection.
+     * @param id  The unique ID of the contact to display.
+     */
     protected void printSingleContact(Connection con, int id) {
         try (PreparedStatement stmt = con.prepareStatement("SELECT * FROM contacts WHERE contact_id = ?")) {
             stmt.setInt(1, id);
@@ -457,11 +534,22 @@ public class JuniorDevMenu extends TesterMenu {
         }
     }
 
+    /**
+     * A simple Data Transfer Object (DTO) to store the state of a contact field before an update.
+     * Used within the {@link #undoStack} to facilitate undo operations.
+     */
     protected class UndoAction {
         int contactId;
         String columnName;
         String oldValue;
 
+        /**
+         * Creates a snapshot of a field's value before modification.
+         *
+         * @param contactId  The ID of the contact being modified.
+         * @param columnName The database column name being modified.
+         * @param oldValue   The value of the column before the update.
+         */
         public UndoAction(int contactId, String columnName, String oldValue) {
             this.contactId = contactId;
             this.columnName = columnName;
@@ -469,6 +557,11 @@ public class JuniorDevMenu extends TesterMenu {
         }
     }
 
+    /**
+     * Prompts the user to decide whether to retry an operation or cancel.
+     *
+     * @return true if the user chooses to retry, false otherwise.
+     */
     private boolean askRetry() {
         while (true) {
             System.out.print(YELLOW + "Would you like to try again? (y/n): " + RESET);

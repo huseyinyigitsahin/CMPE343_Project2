@@ -7,9 +7,22 @@ import java.sql.SQLException;
 import java.util.Scanner;
 import java.util.Random;
 
+/**
+ * Handles the user interface and logic for the login process.
+ * <p>
+ * This class is responsible for:
+ * <ul>
+ * <li>Rendering the application splash screen and ASCII art.</li>
+ * <li>Displaying animated loading bars with helpful tips.</li>
+ * <li>Rendering the login form and accepting user input.</li>
+ * <li>Authenticating credentials against the database.</li>
+ * <li>Hashing passwords and evaluating password strength.</li>
+ * </ul>
+ * </p>
+ */
 public class LoginScreen {
 
-    // Color constants
+    // ============================= ANSI COLOR CONSTANTS =============================
     public static final String RESET = "\u001b[0m";
     public static final String RED = "\u001b[31m";
     public static final String GREEN = "\u001b[32m";
@@ -18,10 +31,15 @@ public class LoginScreen {
     public static final String BLUE = "\u001b[34m";
     public static final String WHITE_BOLD = "\u001b[1;37m";
 
+    /** Stores the username of the last attempted login (successful or not). */
     private static String lastUsername;
+
+    /** Stores the strength rating of the password used in the last login attempt. */
     private static String lastPasswordStrengthAtLogin;
 
-    // Tips for loading bar (plain English sentences, no "Tip #1")
+    /**
+     * A collection of professional tips displayed dynamically during the loading animation.
+     */
     private static final String[] WORK_MESSAGES = {
         "Keeping your contact list up to date prevents losing important people.",
         "When adding a new contact, try to fill in email, phone and role completely.",
@@ -35,17 +53,33 @@ public class LoginScreen {
         "Consistent name formatting gives a far more professional impression."
     };
 
+    /**
+     * Retrieves the username used in the last authentication attempt.
+     * @return The username string.
+     */
     public static String getLastUsername() {
         return lastUsername;
     }
 
+    /**
+     * Retrieves the strength evaluation (e.g., "weak", "strong") of the last password entered.
+     * @return The password strength string.
+     */
     public static String getLastPasswordStrengthAtLogin() {
         return lastPasswordStrengthAtLogin;
     }
 
     /* ===================== VISUAL / FLOW METHODS ===================== */
 
-    // 1) First screen: CMPE343 ASCII + names + "Press ENTER to continue"
+    /**
+     * Displays the initial application splash screen.
+     * <p>
+     * Clears the console and prints the project logo (ASCII art), course details,
+     * and group members. Pauses execution until the user presses ENTER.
+     * </p>
+     *
+     * @param scanner The scanner instance used to detect the ENTER key press.
+     */
     public static void showInitialSplash(Scanner scanner) {
         clearScreen();
 
@@ -67,27 +101,38 @@ public class LoginScreen {
         scanner.nextLine(); // wait until user presses ENTER
     }
 
-    // 2) After splash: full-screen loading bar (only on login flow)
+    /**
+     * Triggers the loading bar animation specifically for the system startup phase.
+     */
     public static void showPreLoginLoadingBar() {
         showLoadingBarScreen("System is starting, please wait...");
     }
 
-    // 5) After correct password: full-screen loading bar again
+    /**
+     * Triggers the loading bar animation specifically for the credential verification phase.
+     */
     public static void showPostLoginLoadingBar() {
         showLoadingBarScreen("Verifying your credentials, please wait...");
     }
 
     /**
-     * Full-screen loading screen in 3 phases (like slides):
-     *  - Phase 1: title + bar (0–35%)
-     *  - Phase 2: title + tip1 + bar (35–70%)
-     *  - Phase 3: title + tip2 + bar (70–100%)
-     * Each phase clears the screen, so previous tip/bar is not visible anymore.
+     * Renders a full-screen animated loading bar.
+     * <p>
+     * The animation is divided into three phases to simulate a loading process:
+     * <ul>
+     * <li><b>Phase 1 (0-35%):</b> Displays only the title and the progress bar.</li>
+     * <li><b>Phase 2 (35-70%):</b> Displays the title, a random tip, and the progress bar.</li>
+     * <li><b>Phase 3 (70-100%):</b> Displays the title, a second random tip, and the progress bar.</li>
+     * </ul>
+     * This method uses {@link Thread#sleep(long)} to create the animation effect.
+     * </p>
+     *
+     * @param title The title text to display above the loading bar.
      */
     private static void showLoadingBarScreen(String title) {
         int barWidth = 30;
         int stepsPerPhase = 10;   // 10 frames per phase
-        int delayMs = 120;        // 120ms per frame  → ~3.6s total + small pause
+        int delayMs = 120;        // 120ms per frame  -> ~3.6s total + small pause
 
         Random random = new Random();
 
@@ -174,7 +219,10 @@ public class LoginScreen {
         }
     }
 
-    // 4) Contact Management + login form header
+    /**
+     * Prints the header and borders for the login form.
+     * Clears the screen before rendering to ensure a clean UI.
+     */
     public static void printLoginFormHeader() {
         clearScreen();
 
@@ -191,12 +239,20 @@ public class LoginScreen {
         System.out.println(CYAN + "|                                              |" + RESET);
     }
 
+    /**
+     * Prints the footer border for the login form.
+     */
     public static void printLoginFooter() {
         System.out.println(CYAN + "|                                              |" + RESET);
         System.out.println(CYAN + "+----------------------------------------------+" + RESET);
     }
 
-    // Wrong password prompt (kept on screen, user chooses)
+    /**
+     * Displays an error prompt when login fails.
+     * Keeps the prompt on screen until the user acknowledges it.
+     *
+     * @param msg The error message to display (e.g., "Incorrect username or password").
+     */
     public static void showLoginErrorPrompt(String msg) {
         System.out.println();
         System.out.println(RED + ">> " + msg + RESET);
@@ -206,6 +262,18 @@ public class LoginScreen {
 
     /* ===================== AUTH / PASSWORD METHODS ===================== */
 
+    /**
+     * Authenticates a user against the database.
+     * <p>
+     * 1. Evaluates the input password strength.
+     * 2. Hashes the input password using SHA-256.
+     * 3. Queries the database for a matching username and password hash.
+     * </p>
+     *
+     * @param username The entered username.
+     * @param password The entered raw password.
+     * @return true if credentials are valid, false otherwise.
+     */
     public static boolean authenticate(String username, String password) {
         if (username == null || password == null) {
             return false;
@@ -246,6 +314,12 @@ public class LoginScreen {
         }
     }
 
+    /**
+     * Hashes a password using the SHA-256 algorithm.
+     *
+     * @param password The raw password string.
+     * @return The hexadecimal string representation of the hash, or an empty string if hashing fails.
+     */
     private static String hashPassword(String password) {
         if (password == null) {
             return "";
@@ -266,6 +340,12 @@ public class LoginScreen {
         }
     }
 
+    /**
+     * Evaluates the strength of a password based on length and character diversity.
+     *
+     * @param password The password to evaluate.
+     * @return One of: "very_weak", "weak", "medium", or "strong".
+     */
     private static String evaluatePasswordStrength(String password) {
         if (password == null) {
             return "very_weak";
@@ -296,6 +376,10 @@ public class LoginScreen {
 
     /* ===================== UTILS ===================== */
 
+    /**
+     * Clears the console screen using ANSI escape codes.
+     * Moves the cursor to the top-left corner and clears the display buffer.
+     */
     public static void clearScreen() {
         System.out.print("\u001b[H\u001b[2J");
         System.out.flush();

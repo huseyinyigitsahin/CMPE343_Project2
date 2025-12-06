@@ -1,19 +1,50 @@
 import java.sql.*;
 import java.util.Scanner;
 import java.util.Stack;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
+/**
+ * Represents the menu interface specifically designed for the Senior Developer role.
+ * <p>
+ * This class extends {@link JuniorDevMenu} and adds advanced administrative capabilities,
+ * including:
+ * <ul>
+ * <li>Creating new contacts (single or bulk).</li>
+ * <li>Deleting contacts (single or bulk).</li>
+ * <li>An enhanced undo mechanism that handles creation, deletion, and bulk operations.</li>
+ * </ul>
+ * </p>
+ */
 public class SeniorDevMenu extends JuniorDevMenu {
 
     private final Stack<SeniorUndoAction> seniorUndoStack;
 
-    // Maksimum alan uzunluğu (tüm text inputlar için)
+    // Maximum length for any text input field
     private static final int MAX_FIELD_LEN = 100;
 
+    /**
+     * Constructs a new SeniorDevMenu instance.
+     *
+     * @param username         The username of the currently logged-in user.
+     * @param fullName         The full name of the user.
+     * @param role             The role of the user (expected to be "Senior Developer").
+     * @param scanner          The shared Scanner instance for user input.
+     * @param passwordStrength The strength evaluation of the user's current password.
+     */
     public SeniorDevMenu(String username, String fullName, String role, Scanner scanner, String passwordStrength) {
         super(username, fullName, role, scanner, passwordStrength);
         this.seniorUndoStack = new Stack<>();
     }
 
+    /**
+     * Displays the main menu loop for the Senior Developer.
+     * <p>
+     * Includes all options from Junior Developer plus Add (Single/Multi), Delete (Single/Multi),
+     * and a Senior-level Undo.
+     * </p>
+     */
     @Override
     public void showMenu() {
         while (true) {
@@ -44,7 +75,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
             System.out.println(GREEN + "11)" + RESET + " Logout");
             System.out.print(YELLOW + "Select (1-11): " + RESET);
 
-            String input = readTrimmed();
+            String input = scanner.nextLine().trim();
             int choice;
 
             try {
@@ -61,7 +92,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
                     case 2:  handleListContacts();            break;
                     case 3:  handleSearchContacts();          break;
                     case 4:  handleSortContacts();            break;
-                    case 5:  handleUpdateContact();           break; // JuniorDevMenu
+                    case 5:  handleUpdateContact();           break; // Inherited from JuniorDevMenu
                     case 6:  handleAddContact();              break;
                     case 7:  handleAddMultipleContacts();     break;
                     case 8:  handleDeleteContact();           break;
@@ -83,39 +114,66 @@ public class SeniorDevMenu extends JuniorDevMenu {
 
     // ============================= COMMON HELPERS ===============================
 
-    /** Sadece q/quit/exit iptal olarak algılanır. */
+    /**
+     * Checks if the input corresponds to a cancellation command.
+     *
+     * @param in The input string.
+     * @return true if input is "q", "quit", or "exit".
+     */
     private boolean isCancelKeyword(String in) {
-        String t = trimOrEmpty(in).toLowerCase();
+        String t = (in == null ? "" : in.trim()).toLowerCase();
         return t.equals("q") || t.equals("quit") || t.equals("exit");
     }
 
-    /** 'b' veya 'back' bir önceki adıma dönmek için. */
+    /**
+     * Checks if the input corresponds to a "back" command.
+     *
+     * @param in The input string.
+     * @return true if input is "b" or "back".
+     */
     private boolean isBackCommand(String in) {
-        String t = trimOrEmpty(in).toLowerCase();
+        String t = (in == null ? "" : in.trim()).toLowerCase();
         return t.equals("b") || t.equals("back");
     }
 
-    /** MAX_FIELD_LEN kontrolü ile okuma; çok uzunsa null döner. */
+    /**
+     * Reads a line of input, trims it, and validates length against {@link #MAX_FIELD_LEN}.
+     *
+     * @return The trimmed string, or null if the input exceeds maximum length.
+     */
     private String readLimitedLine() {
-        String val = readTrimmed();
+        String val = scanner.nextLine().trim();
         if (val.length() > MAX_FIELD_LEN) {
             return null;
         }
         return val;
     }
 
-    /** Türkçe locale ile ilk harfi büyük, kalanı küçük yap. */
+    /**
+     * Capitalizes the first letter of a string using Turkish locale rules.
+     * Useful for names like "ışık" becoming "Işık".
+     *
+     * @param text The text to capitalize.
+     * @return The capitalized string.
+     */
     private String capitalizeNameTr(String text) {
-        text = trimOrEmpty(text);
+        if (text == null) return "";
+        text = text.trim();
         if (text.isEmpty()) return text;
-        java.util.Locale tr = new java.util.Locale("tr", "TR");
+        Locale tr = new Locale("tr", "TR");
         String lower = text.toLowerCase(tr);
         String first = lower.substring(0, 1).toUpperCase(tr);
         if (lower.length() == 1) return first;
         return first + lower.substring(1);
     }
 
-    /** 2 harfli isimler için emin misin sorusu. */
+    /**
+     * Asks for confirmation if a name is very short (<= 2 characters).
+     *
+     * @param label The name of the field (e.g., "First name").
+     * @param value The value entered by the user.
+     * @return true if confirmed or length is sufficient; false if user says 'no'.
+     */
     private boolean confirmShortName(String label, String value) {
         if (value == null) return false;
         if (value.length() > 2) return true;
@@ -125,11 +183,11 @@ public class SeniorDevMenu extends JuniorDevMenu {
                 YELLOW + label + " is only " + value.length() +
                 " characters. Are you sure (y/n, q = cancel): " + RESET
             );
-            String ans = readTrimmed().toLowerCase();
+            String ans = scanner.nextLine().trim().toLowerCase();
             if (ans.equals("y") || ans.equals("yes")) {
                 return true;
             } else if (ans.equals("n") || ans.equals("no")) {
-                return false; // tekrar girmesi için false
+                return false; // User wants to re-enter
             } else if (isCancelKeyword(ans)) {
                 System.out.println(YELLOW + "Contact creation cancelled." + RESET);
                 return false;
@@ -139,8 +197,21 @@ public class SeniorDevMenu extends JuniorDevMenu {
         }
     }
 
-    // ============================= ADD (BACK + CANCEL DESTEKLİ) ===============================
+    // ============================= ADD CONTACT (WIZARD FLOW) ===============================
 
+    /**
+     * Initiates a multi-step wizard to add a new contact.
+     * <p>
+     * Features:
+     * <ul>
+     * <li>Step-by-step data entry (First Name -> Middle Name -> Last Name...).</li>
+     * <li>Support for 'b' (back) to return to previous fields.</li>
+     * <li>Support for 'q' (quit) to cancel the operation.</li>
+     * <li>Auto-generated "Next ID" preview.</li>
+     * <li>Final review summary before committing to the database.</li>
+     * </ul>
+     * </p>
+     */
     private void handleAddContact() {
         clearScreen();
         System.out.println(CYAN + "=== ADD NEW CONTACT ===" + RESET);
@@ -154,7 +225,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
         dB_Connection db = new dB_Connection();
         Connection con = null;
 
-        // Kullanıcının girdiği ham değerler (henüz capitalize edilmemiş)
+        // Raw input values holder
         String firstRaw  = "";
         String middleRaw = "";
         String lastRaw   = "";
@@ -173,7 +244,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
                 return;
             }
 
-            // Tahmini sonraki ID (sadece göster, kullanıcı değiştiremiyor)
+            // Preview next ID
             Integer nextId = null;
             try (PreparedStatement ps = con.prepareStatement("SELECT MAX(contact_id) AS max_id FROM contacts");
                  ResultSet rs = ps.executeQuery()) {
@@ -193,13 +264,12 @@ public class SeniorDevMenu extends JuniorDevMenu {
                 System.out.println();
             }
 
-            // Adım sayacı: 0 = first, 1 = middle, 2 = last, 3 = nick, 4 = phone1,
-            // 5 = phone2, 6 = email, 7 = linkedin, 8 = bday
+            // Step counter: 0=First, 1=Middle, 2=Last, 3=Nick, 4=Phone1, 5=Phone2, 6=Email, 7=LinkedIn, 8=Bday
             int step = 0;
 
             while (true) {
                 if (step == 9) {
-                    // Tüm alanlar toplandı, preview & kaydet'e geçeceğiz
+                    // All steps completed, proceed to save
                     break;
                 }
 
@@ -231,12 +301,11 @@ public class SeniorDevMenu extends JuniorDevMenu {
                         }
 
                         if (!confirmShortName("First name", tmp)) {
-                            // tekrar iste
                             break;
                         }
 
                         firstRaw = tmp;
-                        step++;  // sonraki alana geç
+                        step++;
                         break;
                     }
 
@@ -256,7 +325,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
                             return;
                         }
                         if (isBackCommand(tmp)) {
-                            step--;   // first name'e dön
+                            step--; 
                             break;
                         }
 
@@ -297,7 +366,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
                             return;
                         }
                         if (isBackCommand(tmp)) {
-                            step--;   // middle name'e dön
+                            step--;
                             break;
                         }
 
@@ -336,7 +405,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
                             return;
                         }
                         if (isBackCommand(tmp)) {
-                            step--;   // last name'e dön
+                            step--;
                             break;
                         }
 
@@ -373,7 +442,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
                             return;
                         }
                         if (isBackCommand(raw)) {
-                            step--;   // nick'e dön
+                            step--;
                             break;
                         }
 
@@ -412,7 +481,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
                             return;
                         }
                         if (isBackCommand(raw)) {
-                            step--;   // primary phone'a dön
+                            step--;
                             break;
                         }
 
@@ -460,7 +529,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
                             return;
                         }
                         if (isBackCommand(tmp)) {
-                            step--;   // secondary phone'a dön
+                            step--;
                             break;
                         }
 
@@ -508,33 +577,31 @@ public class SeniorDevMenu extends JuniorDevMenu {
                         }
 
                         if (isBackCommand(tmp)) {
-                            step--;   // email'e dön
+                            step--;
                             break;
                         }
 
-                        tmp = trimOrEmpty(tmp);
+                        tmp = tmp.trim();
 
-                        // Kullanıcı boş bıraktı — optional
                         if (tmp.isEmpty()) {
                             linkedin = "";
                             step++;
                             break;
                         }
 
-                        // Kullanıcı yanlışlıkla URL yazdıysa engelle
+                        // Prevent full URLs
                         if (tmp.startsWith("http://") || tmp.startsWith("https://") || tmp.startsWith("www.")) {
                             System.out.println(RED + "Do NOT type the full URL. Only username is required." + RESET);
                             System.out.println(YELLOW + "Correct example: " + RESET + " ahmet");
                             break;
                         }
 
-                        // Boşluk içeremez
                         if (tmp.contains(" ")) {
                             System.out.println(RED + "Username cannot contain spaces." + RESET);
                             break;
                         }
 
-                        // Final format (sadece bu!)
+                        // Format string
                         linkedin = "linkedin.com/in/" + tmp;
                         step++;
                         break;
@@ -556,7 +623,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
                             return;
                         }
                         if (isBackCommand(tmp)) {
-                            step--;   // linkedin'e dön
+                            step--;
                             break;
                         }
 
@@ -581,12 +648,12 @@ public class SeniorDevMenu extends JuniorDevMenu {
                 }
             }
 
-            // ---- İsimleri DB'ye girmeden önce normalize et (ilk harf büyük, geri kalanı küçük) ----
+            // Normalize names before database entry
             String first  = capitalizeNameTr(firstRaw);
             String middle = capitalizeNameTr(middleRaw);
             String last   = capitalizeNameTr(lastRaw);
 
-            // ---- Kaydetmeden önce özet + onay ----
+            // Preview and confirm
             clearScreen();
             System.out.println(CYAN + "=== NEW CONTACT PREVIEW ===" + RESET);
             System.out.println("First Name : " + first);
@@ -602,9 +669,9 @@ public class SeniorDevMenu extends JuniorDevMenu {
 
             while (true) {
                 System.out.print(YELLOW + "Do you want to save this contact (y/n, q = cancel): " + RESET);
-                String ans = readTrimmed().toLowerCase();
+                String ans = scanner.nextLine().trim().toLowerCase();
                 if (ans.equals("y") || ans.equals("yes")) {
-                    break; // kaydetmeye geç
+                    break;
                 } else if (ans.equals("n") || ans.equals("no") || isCancelKeyword(ans)) {
                     System.out.println(YELLOW + "Contact creation cancelled. Nothing was saved." + RESET);
                     waitForEnter();
@@ -614,7 +681,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
                 }
             }
 
-            // ===== INSERT INTO DB =====
+            // Database Insertion
             String sql = "INSERT INTO contacts " +
                     "(first_name, middle_name, last_name, nickname, phone_primary, phone_secondary, email, linkedin_url, birth_date) " +
                     "VALUES (?,?,?,?,?,?,?,?,?)";
@@ -664,6 +731,13 @@ public class SeniorDevMenu extends JuniorDevMenu {
         waitForEnter();
     }
 
+    /**
+     * Facilitates adding multiple contacts in a single session.
+     * <p>
+     * Asks the user for the number of contacts to add, then loops through the
+     * {@link #handleAddContact()} logic for each one.
+     * </p>
+     */
     private void handleAddMultipleContacts() {
 
         clearScreen();
@@ -676,7 +750,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
 
         while (true) {
             System.out.print("How many contacts? (1-10): ");
-            String in = readTrimmed();
+            String in = scanner.nextLine().trim();
 
             if (isCancelKeyword(in)) {
                 System.out.println(YELLOW + "Cancelled." + RESET);
@@ -715,7 +789,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
             System.out.println();
 
             System.out.print("Press ENTER to continue, 'b' to redo this contact, 'q' to quit: ");
-            String next = readTrimmed();
+            String next = scanner.nextLine().trim();
 
             if (isCancelKeyword(next)) {
                 System.out.println(YELLOW + "Stopped early by user." + RESET);
@@ -725,38 +799,42 @@ public class SeniorDevMenu extends JuniorDevMenu {
 
             if (isBackCommand(next)) {
                 System.out.println(YELLOW + "Redoing contact " + index + "..." + RESET);
-                continue; // Aynı kişiyi tekrar gir
+                continue; // Retry current index
             }
 
-            index++; // Sonraki kişiye geç
+            index++;
         }
 
         System.out.println(GREEN + "All contacts added successfully." + RESET);
         waitForEnter();
     }
 
-
-
     // ============================= DELETE ===============================
 
+    /**
+     * Handles the deletion of a single contact.
+     * <p>
+     * Lists contacts for reference, accepts an ID input, deletes the record,
+     * and saves the action to the undo stack.
+     * </p>
+     */
     private void handleDeleteContact() {
         while (true) {
             clearScreen();
             System.out.println(CYAN + "=== DELETE CONTACT ===" + RESET);
 
-            handleListContactsForUpdate(); // JuniorDevMenu
+            handleListContactsForUpdate(); // Inherited from JuniorDevMenu
 
             System.out.println();
             System.out.println(YELLOW + "Type 'q' to return to SENIOR menu." + RESET);
             System.out.print("Enter ID to delete (q to cancel): ");
-            String in = readTrimmed();
+            String in = scanner.nextLine().trim();
 
             if (isCancelKeyword(in)) {
                 System.out.println(YELLOW + "Returning to SENIOR menu." + RESET);
                 waitForEnter();
                 return;
             }
-
 
             int id;
             try {
@@ -777,7 +855,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
                 System.out.println(GREEN + "3)" + RESET + " Return to SENIOR menu");
                 System.out.print(YELLOW + "Select (1-3, q = back): " + RESET);
 
-                String nextAction = readTrimmed();
+                String nextAction = scanner.nextLine().trim();
                 if (isCancelKeyword(nextAction)) {
                     return;
                 }
@@ -796,6 +874,12 @@ public class SeniorDevMenu extends JuniorDevMenu {
         }
     }
 
+    /**
+     * Allows deleting multiple contacts at once by accepting comma-separated IDs.
+     * <p>
+     * Creates a single bulk undo action for all successfully deleted contacts.
+     * </p>
+     */
     private void handleDeleteMultipleContacts() {
         while (true) {
             clearScreen();
@@ -806,7 +890,7 @@ public class SeniorDevMenu extends JuniorDevMenu {
             System.out.println();
             System.out.println(YELLOW + "Type 'q' to return to SENIOR menu." + RESET);
             System.out.print("Enter IDs comma-separated (e.g. 10,12,15) or q to cancel: ");
-            String line = readTrimmed();
+            String line = scanner.nextLine().trim();
 
             if (isCancelKeyword(line)) {
                 System.out.println(YELLOW + "Returning to SENIOR menu." + RESET);
@@ -821,13 +905,15 @@ public class SeniorDevMenu extends JuniorDevMenu {
             }
 
             String[] arr = line.split(",");
+            List<ContactSnapshot> deletedSnaps = new ArrayList<>();
             int successCount = 0;
 
             for (String s : arr) {
                 try {
                     int id = Integer.parseInt(s.trim());
-                    boolean deleted = deleteSingle(id);
-                    if (deleted) {
+                    ContactSnapshot snap = deleteSingleNoPush(id);
+                    if (snap != null) {
+                        deletedSnaps.add(snap);
                         successCount++;
                     }
                 } catch (Exception e) {
@@ -840,21 +926,22 @@ public class SeniorDevMenu extends JuniorDevMenu {
                 System.out.println(GREEN + "Successfully deleted " + successCount + " contacts." + RESET);
                 System.out.println(CYAN + "What would you like to do next?" + RESET);
                 System.out.println(GREEN + "1)" + RESET + " Delete more contacts");
-                System.out.println(GREEN + "2)" + RESET + " Undo last deletion (restores the LAST deleted contact)");
+                System.out.println(GREEN + "2)" + RESET + " Undo last deletion (restores the deleted contacts from this operation)");
                 System.out.println(GREEN + "3)" + RESET + " Return to SENIOR menu");
                 System.out.print(YELLOW + "Select (1-3, q = back): " + RESET);
 
-                String nextAction = readTrimmed();
+                String nextAction = scanner.nextLine().trim();
                 if (isCancelKeyword(nextAction)) {
                     System.out.println(YELLOW + "Returning to SENIOR menu." + RESET);
                     waitForEnter();
                     return;
                 }
 
-
                 if (nextAction.equals("1")) {
                     continue;
                 } else if (nextAction.equals("2")) {
+                    // Push a single grouped undo entry for all deleted snapshots
+                    seniorUndoStack.push(new SeniorUndoAction("BULK_DELETE", deletedSnaps.toArray(new ContactSnapshot[0])));
                     handleUndoSenior();
                     waitForEnter();
                     continue;
@@ -868,6 +955,12 @@ public class SeniorDevMenu extends JuniorDevMenu {
         }
     }
 
+    /**
+     * Helper to delete a single contact and push to undo stack.
+     *
+     * @param id The ID of the contact to delete.
+     * @return true if deletion was successful.
+     */
     private boolean deleteSingle(int id) {
         dB_Connection db = new dB_Connection();
         Connection con = null;
@@ -903,8 +996,56 @@ public class SeniorDevMenu extends JuniorDevMenu {
         return false;
     }
 
+    /**
+     * Deletes a contact but DO NOT push an undo action immediately.
+     * Used for bulk operations where we group actions later.
+     *
+     * @param id The ID to delete.
+     * @return The snapshot of the deleted contact, or null if failed.
+     */
+    private ContactSnapshot deleteSingleNoPush(int id) {
+        dB_Connection db = new dB_Connection();
+        Connection con = null;
+        try {
+            con = db.connect();
+            if (con == null) {
+                System.out.println(RED + "Database connection failed." + RESET);
+                return null;
+            }
+
+            ContactSnapshot snap = getContactSnapshot(con, id);
+            if (snap == null) {
+                System.out.println(RED + "Contact ID not found: " + id + RESET);
+                return null;
+            }
+
+            PreparedStatement del = con.prepareStatement("DELETE FROM contacts WHERE contact_id=?");
+            del.setInt(1, id);
+
+            if (del.executeUpdate() > 0) {
+                System.out.println(GREEN + "Deleted ID: " + id + RESET);
+                return snap;
+            }
+
+        } catch (Exception e) {
+            System.out.println(RED + "Delete error for ID " + id + ": " + e.getMessage() + RESET);
+        } finally {
+            if (con != null) {
+                try { con.close(); } catch (SQLException ignored) {}
+            }
+        }
+        return null;
+    }
+
     // ============================= UNDO ===============================
 
+    /**
+     * Handles undo operations for Senior Developer actions.
+     * <p>
+     * Delegates to specific undo handlers based on the action type (ADD, DELETE, BULK_DELETE).
+     * Falls back to the parent class's undo if the local stack is empty.
+     * </p>
+     */
     private void handleUndoSenior() {
         clearScreen();
         System.out.println(CYAN + "=== UNDO LAST ACTION (SENIOR) ===" + RESET);
@@ -920,6 +1061,13 @@ public class SeniorDevMenu extends JuniorDevMenu {
                     break;
                 case "UPDATE":
                     undoUpdateSenior(ua.snap);
+                    break;
+                case "BULK_DELETE":
+                    if (ua.snaps != null) {
+                        for (ContactSnapshot s : ua.snaps) {
+                            undoDelete(s);
+                        }
+                    }
                     break;
             }
             waitForEnter();
@@ -1054,6 +1202,9 @@ public class SeniorDevMenu extends JuniorDevMenu {
         );
     }
 
+    /**
+     * A simple DTO to hold the state of a contact.
+     */
     private static class ContactSnapshot {
         int contact_id;
         String first_name, middle_name, last_name, nickname;
@@ -1070,11 +1221,26 @@ public class SeniorDevMenu extends JuniorDevMenu {
         }
     }
 
+    /**
+     * DTO for storing undoable actions specific to the Senior Developer role.
+     */
     private static class SeniorUndoAction {
-        String type;
+        String type; // ADD, DELETE, BULK_DELETE, UPDATE
         ContactSnapshot snap;
+        ContactSnapshot[] snaps;
+
         SeniorUndoAction(String type, ContactSnapshot snap) {
             this.type = type; this.snap = snap;
+            this.snaps = null;
+        }
+
+        SeniorUndoAction(String type, ContactSnapshot[] snaps) {
+            this.type = type; this.snaps = snaps;
+            if (snaps != null && snaps.length == 1) {
+                this.snap = snaps[0];
+            } else {
+                this.snap = null;
+            }
         }
     }
 }
