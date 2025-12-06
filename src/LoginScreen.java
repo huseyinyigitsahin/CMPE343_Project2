@@ -21,7 +21,6 @@ public class LoginScreen {
     private static String lastUsername;
     private static String lastPasswordStrengthAtLogin;
 
-    // Tips for loading bar (plain English sentences, no "Tip #1")
     private static final String[] WORK_MESSAGES = {
         "Keeping your contact list up to date prevents losing important people.",
         "When adding a new contact, try to fill in email, phone and role completely.",
@@ -211,10 +210,11 @@ public class LoginScreen {
             return false;
         }
 
-        lastPasswordStrengthAtLogin = evaluatePasswordStrength(password);
+        // ORTAK UTIL KULLANIMI
+        lastPasswordStrengthAtLogin = PasswordUtils.evaluatePasswordStrength(password);
         lastUsername = username;
 
-        String hashed = hashPassword(password);
+        String hashed = PasswordUtils.hashPassword(password);
         if (hashed.isEmpty()) {
             return false;
         }
@@ -242,54 +242,6 @@ public class LoginScreen {
             try {
                 con.close();
             } catch (SQLException ignored) {
-            }
-        }
-    }
-
-    private static String hashPassword(String password) {
-        if (password == null) {
-            return "";
-        }
-
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] digest = md.digest(password.getBytes());
-            StringBuilder sb = new StringBuilder();
-
-            for (byte b : digest) {
-                sb.append(String.format("%02x", b));
-            }
-
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            return "";
-        }
-    }
-
-    private static String evaluatePasswordStrength(String password) {
-        if (password == null) {
-            return "very_weak";
-        }
-
-        int length = password.length();
-        boolean hasLetter = password.matches(".*[A-Za-z].*");
-        boolean hasDigit = password.matches(".*[0-9].*");
-        boolean hasSymbol = password.matches(".*[^A-Za-z0-9].*");
-
-        if (length < 4) {
-            return "very_weak";
-        } else if (length < 8) {
-            return "weak";
-        } else {
-            int score = 0;
-            if (hasLetter) score++;
-            if (hasDigit)  score++;
-            if (hasSymbol) score++;
-
-            if (length >= 12 && score >= 2) {
-                return "strong";
-            } else {
-                return "medium";
             }
         }
     }
