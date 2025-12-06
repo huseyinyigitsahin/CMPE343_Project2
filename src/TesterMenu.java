@@ -35,10 +35,10 @@ public class TesterMenu {
 
     // ====== CONSTRUCTOR ======
     public TesterMenu(String username,
-            String fullName,
-            String role,
-            Scanner scanner,
-            String passwordStrengthAtLogin) {
+                      String fullName,
+                      String role,
+                      Scanner scanner,
+                      String passwordStrengthAtLogin) {
         this.username = trimOrEmpty(username);
         this.fullName = trimOrEmpty(fullName);
         this.role = trimOrEmpty(role);
@@ -685,7 +685,7 @@ public class TesterMenu {
         String sql = "SELECT * FROM contacts";
 
         try (PreparedStatement stmt = con.prepareStatement(sql);
-                ResultSet rs = stmt.executeQuery()) {
+             ResultSet rs = stmt.executeQuery()) {
 
             boolean empty = true;
 
@@ -1153,7 +1153,7 @@ public class TesterMenu {
         int matchedCount = 0;
 
         try (PreparedStatement stmt = con.prepareStatement(sql);
-                ResultSet rs = stmt.executeQuery()) {
+             ResultSet rs = stmt.executeQuery()) {
 
             clearScreen();
             System.out.println(CYAN + "=== ADVANCED SEARCH QUICK FILTER RESULTS ===" + RESET);
@@ -1195,6 +1195,11 @@ public class TesterMenu {
             System.out.print(YELLOW + "Your choice: " + RESET);
 
             String mainChoice = readTrimmed();
+            if (mainChoice.equalsIgnoreCase(":b")) {
+                System.out.println(YELLOW + "Advanced search cancelled." + RESET);
+                waitForEnter();
+                return;
+            }
 
             if ("0".equals(mainChoice)) {
                 return;
@@ -1212,6 +1217,11 @@ public class TesterMenu {
                     System.out.print("Your choice (R or B): ");
 
                     String choice = readTrimmed().toLowerCase();
+                    if (choice.equalsIgnoreCase(":b")) {
+                        System.out.println(YELLOW + "Advanced search cancelled." + RESET);
+                        waitForEnter();
+                        return;
+                    }
 
                     if (choice.equals("r")) {
                         break;
@@ -1244,20 +1254,46 @@ public class TesterMenu {
             System.out.println("  " + GREEN + "5)" + RESET + " Nickname");
             System.out.println("  " + GREEN + "6)" + RESET + " Birth Date YYYY-MM-DD or by month or year");
             System.out.println();
+            System.out.println(YELLOW + "Tip: You can type :b at any time to cancel this advanced search." + RESET);
+            System.out.println();
 
-            String[] columns = new String[2];
-            String[] labels = new String[2];
-            String[] ops = new String[2];
-            String[] val1 = new String[2];
-            String[] val2 = new String[2];
+            final int MAX_CONDITIONS = 6;
+            String[] columns = new String[MAX_CONDITIONS];
+            String[] labels = new String[MAX_CONDITIONS];
+            String[] ops = new String[MAX_CONDITIONS];
+            String[] val1 = new String[MAX_CONDITIONS];
+            String[] val2 = new String[MAX_CONDITIONS];
 
             int count = 0;
 
-            // BURADA: Artık "Do you want to add a condition" yok,
-            // direkt condition 1 ve 2 istenir.
-            while (count < 2) {
+            while (true) {
                 System.out.println();
                 System.out.println(CYAN + "Selected filters so far: " + count + RESET);
+
+                // Seçilen filtreleri kutu içinde göster
+                if (count > 0) {
+                    System.out.println(CYAN + "Current conditions:" + RESET);
+                    for (int i = 0; i < count; i++) {
+                        String opCode = ops[i];
+                        String displayOp;
+                        if ("date_eq".equals(opCode)) {
+                            displayOp = "DATE =";
+                        } else if ("month".equals(opCode)) {
+                            displayOp = "MONTH =";
+                        } else if ("year".equals(opCode)) {
+                            displayOp = "YEAR =";
+                        } else {
+                            displayOp = getOperatorLabel(opCode);
+                        }
+                        System.out.println("  [" + (i + 1) + "] [" + labels[i] + " | " + displayOp + " " + val1[i] + "]");
+                    }
+                }
+
+                if (count >= MAX_CONDITIONS) {
+                    System.out.println(YELLOW + "You have reached the maximum number of conditions (" +
+                            MAX_CONDITIONS + ")." + RESET);
+                    break;
+                }
 
                 System.out.println();
                 System.out.println(CYAN + "Select field for condition " + (count + 1) + ":" + RESET);
@@ -1267,12 +1303,19 @@ public class TesterMenu {
                 System.out.println(GREEN + "4)" + RESET + " Email");
                 System.out.println(GREEN + "5)" + RESET + " Nickname");
                 System.out.println(GREEN + "6)" + RESET + " Birth Date");
-                System.out.print(YELLOW + "Your choice (1-6, 0 to cancel): " + RESET);
+                System.out.print(YELLOW + "Your choice (1-6, 0 to cancel, :b to exit): " + RESET);
                 String fieldOption = readTrimmed();
+
+                if (fieldOption.equalsIgnoreCase(":b")) {
+                    System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
+                    waitForEnter();
+                    return;
+                }
 
                 if (fieldOption.equals("0")) {
                     System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
                     waitForEnter();
+                    count = 0; // hiçbir koşul kullanma
                     break;
                 }
 
@@ -1309,6 +1352,19 @@ public class TesterMenu {
                         continue;
                 }
 
+                // Aynı field ikinci kez seçilemesin
+                boolean alreadyUsed = false;
+                for (int i = 0; i < count; i++) {
+                    if (columns[i] != null && columns[i].equals(columnName)) {
+                        alreadyUsed = true;
+                        break;
+                    }
+                }
+                if (alreadyUsed) {
+                    System.out.println(RED + "You have already added a condition for " + label + ". Please choose another field." + RESET);
+                    continue;
+                }
+
                 String op = null;
                 String value1 = null;
                 String value2 = null;
@@ -1319,21 +1375,36 @@ public class TesterMenu {
                     System.out.println(GREEN + "1)" + RESET + " Exact date YYYY-MM-DD");
                     System.out.println(GREEN + "2)" + RESET + " By month for example 11 or november");
                     System.out.println(GREEN + "3)" + RESET + " By year for example 1999");
-                    System.out.print(YELLOW + "Your choice (1 2 3): " + RESET);
+                    System.out.print(YELLOW + "Your choice (1 2 3, :b to exit): " + RESET);
                     String dateMode = readTrimmed();
+
+                    if (dateMode.equalsIgnoreCase(":b")) {
+                        System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
+                        waitForEnter();
+                        return;
+                    }
 
                     if ("1".equals(dateMode)) {
                         op = "date_eq";
-                        System.out.print("Enter exact birth date YYYY-MM-DD: ");
+                        System.out.print("Enter exact birth date YYYY-MM-DD (or :b to exit): ");
                         value1 = readTrimmed();
+                        if (value1.equalsIgnoreCase(":b")) {
+                            System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
+                            waitForEnter();
+                            return;
+                        }
                         if (!isValidExactDate(value1)) {
-                            System.out
-                                    .println(RED + "Invalid date format or future date. Example: 1995-04-23." + RESET);
+                            System.out.println(RED + "Invalid date format or future date. Example: 1995-04-23." + RESET);
                             continue;
                         }
                     } else if ("2".equals(dateMode)) {
-                        System.out.print("Enter month number 1-12 or name like november: ");
+                        System.out.print("Enter month number 1-12 or name like november (or :b to exit): ");
                         String monthInput = readTrimmed();
+                        if (monthInput.equalsIgnoreCase(":b")) {
+                            System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
+                            waitForEnter();
+                            return;
+                        }
                         if (monthInput.isEmpty()) {
                             System.out.println(RED + "Month cannot be empty. Condition ignored." + RESET);
                             continue;
@@ -1348,13 +1419,17 @@ public class TesterMenu {
                         value1 = String.valueOf(monthNum);
                     } else if ("3".equals(dateMode)) {
                         op = "year";
-                        System.out.print("Enter year for example 1999: ");
+                        System.out.print("Enter year for example 1999 (or :b to exit): ");
                         value1 = readTrimmed();
+                        if (value1.equalsIgnoreCase(":b")) {
+                            System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
+                            waitForEnter();
+                            return;
+                        }
                         if (!value1.matches("\\d{4}")) {
                             System.out.println(RED + "Year must be four digits like 1999. Condition ignored." + RESET);
                             continue;
                         }
-                        // gelecekteki yıl olmasın
                         int yearInt = Integer.parseInt(value1);
                         int currentYear = LocalDate.now().getYear();
                         if (yearInt > currentYear || yearInt < 1900) {
@@ -1374,8 +1449,13 @@ public class TesterMenu {
                     op = opTmp;
 
                     String opLabel = getOperatorLabel(op);
-                    System.out.print("Enter search text for " + label + " (" + CYAN + opLabel + RESET + "): ");
+                    System.out.print("Enter search text for " + label + " (" + CYAN + opLabel + RESET + ", or :b to exit): ");
                     value1 = readTrimmed();
+                    if (value1.equalsIgnoreCase(":b")) {
+                        System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
+                        waitForEnter();
+                        return;
+                    }
                     if (value1.isEmpty()) {
                         System.out.println(RED + "Search text cannot be empty. Condition ignored." + RESET);
                         continue;
@@ -1422,6 +1502,24 @@ public class TesterMenu {
                 count++;
 
                 System.out.println(GREEN + "Filter added. Currently selected: " + count + RESET);
+
+                if (count >= 2) {
+                    System.out.print(YELLOW + "Do you want to add another condition (y or n, :b to exit): " + RESET);
+                    String more = readTrimmed().toLowerCase();
+                    if (more.equalsIgnoreCase(":b")) {
+                        System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
+                        waitForEnter();
+                        return;
+                    }
+                    if (more.equals("y") || more.equals("yes")) {
+                        continue;
+                    } else if (more.equals("n") || more.equals("no")) {
+                        break;
+                    } else {
+                        System.out.println(YELLOW + "Unknown answer, continuing with current conditions." + RESET);
+                        break;
+                    }
+                }
             }
 
             if (count < 2) {
@@ -1434,8 +1532,13 @@ public class TesterMenu {
                     System.out.println(
                             CYAN + "You have only one condition. For single field searches, SIMPLE SEARCH is better."
                                     + RESET);
-                    System.out.print(YELLOW + "Do you want to go to SIMPLE SEARCH menu now (y or n): " + RESET);
+                    System.out.print(YELLOW + "Do you want to go to SIMPLE SEARCH menu now (y or n, :b to exit): " + RESET);
                     String goSimple = readTrimmed().toLowerCase();
+                    if (goSimple.equalsIgnoreCase(":b")) {
+                        System.out.println(YELLOW + "Advanced search cancelled." + RESET);
+                        waitForEnter();
+                        return;
+                    }
                     if (goSimple.equals("y") || goSimple.equals("yes")) {
                         simpleSearch();
                         return;
@@ -1549,9 +1652,14 @@ public class TesterMenu {
                 System.out.println("What would you like to do next");
                 System.out.println("  " + GREEN + "R" + RESET + "  Run another ADVANCED SEARCH");
                 System.out.println("  " + YELLOW + "B" + RESET + "  Return to the SEARCH menu");
-                System.out.print("Your choice (R or B): ");
+                System.out.print("Your choice (R or B, :b to exit): ");
 
                 String choice = readTrimmed().toLowerCase();
+                if (choice.equalsIgnoreCase(":b")) {
+                    System.out.println(YELLOW + "Advanced search cancelled." + RESET);
+                    waitForEnter();
+                    return;
+                }
 
                 if (choice.equals("r")) {
                     break;
@@ -1682,7 +1790,7 @@ public class TesterMenu {
         int count = 0;
 
         try (PreparedStatement stmt = con.prepareStatement(sql);
-                ResultSet rs = stmt.executeQuery()) {
+             ResultSet rs = stmt.executeQuery()) {
 
             clearScreen();
             System.out
