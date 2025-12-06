@@ -136,7 +136,7 @@ public class TesterMenu {
         return text.toLowerCase(new java.util.Locale("tr", "TR"));
     }
 
-    // TEK ENTER versiyonu
+    // TEK ENTER
     protected void waitForEnter() {
         System.out.print(YELLOW + "Press ENTER to continue: " + RESET);
         scanner.nextLine();
@@ -221,13 +221,7 @@ public class TesterMenu {
     }
 
     // ====== VALIDATION HELPERS ======
-    //
-    // Name and surname:
-    // - only letters allowed (English + Turkish),
-    // - NO spaces,
-    // - NO dot,
-    // - NO digits, NO symbols.
-    //
+
     protected boolean isValidName(String text) {
         text = trimOrEmpty(text);
         if (text.isEmpty())
@@ -235,8 +229,6 @@ public class TesterMenu {
         return text.matches("[A-Za-zÇĞİÖŞÜçğıöşü]+");
     }
 
-    // Nickname: Turkish letters, digits, underscore and dot allowed, no spaces, can
-    // be all digits
     protected boolean isValidNickname(String text) {
         text = trimOrEmpty(text);
         if (text.isEmpty())
@@ -247,7 +239,6 @@ public class TesterMenu {
         return text.matches("[A-Za-zÇĞİÖŞÜçğıöşü0-9_.]+");
     }
 
-    // Phone: exact 10 digits after normalization (for equals)
     protected boolean isValidPhoneExact(String raw) {
         raw = trimOrEmpty(raw);
         if (raw.isEmpty())
@@ -256,7 +247,6 @@ public class TesterMenu {
         return digits.length() == 10 && digits.matches("\\d+");
     }
 
-    // Find forbidden character in email
     protected char findForbiddenEmailChar(String email) {
         email = trimOrEmpty(email);
         if (email.isEmpty())
@@ -271,7 +261,6 @@ public class TesterMenu {
         return 0;
     }
 
-    // Email: basic format and limited domains (for equals)
     protected boolean isValidEmailForEquals(String email) {
         email = trimOrEmpty(email);
         if (email.isEmpty())
@@ -296,7 +285,6 @@ public class TesterMenu {
                 || domain.equals("yahoo.com");
     }
 
-    // GÜNCELLENDİ: LocalDate ile gerçek tarih + gelecekte olamaz
     protected boolean isValidExactDate(String date) {
         date = trimOrEmpty(date);
         if (!date.matches("\\d{4}-\\d{2}-\\d{2}")) {
@@ -305,13 +293,11 @@ public class TesterMenu {
         try {
             LocalDate parsed = LocalDate.parse(date);
             LocalDate today = LocalDate.now();
-            // doğum günü gelecekte olamaz
             if (parsed.isAfter(today)) {
                 return false;
             }
             return true;
         } catch (DateTimeParseException e) {
-            // 2023-02-30 gibi hatalı tarihleri yakalar
             return false;
         }
     }
@@ -501,7 +487,6 @@ public class TesterMenu {
     }
 
     // ====== 1) CHANGE PASSWORD ======
-
     protected void handleChangePassword() {
         clearScreen();
         System.out.println(CYAN + "=== CHANGE PASSWORD ===" + RESET);
@@ -820,7 +805,6 @@ public class TesterMenu {
 
             while (stayOnSameField) {
 
-                // First choose operator on a clean screen
                 String op;
                 while (true) {
                     clearScreen();
@@ -848,7 +832,6 @@ public class TesterMenu {
                 clearScreen();
                 System.out.println(CYAN + "=== SIMPLE SEARCH: " + fieldLabel.toUpperCase() + " ===" + RESET);
 
-                // Show format examples depending on field and operator
                 System.out.println();
                 if (columnName.equals("first_name") || columnName.equals("last_name")) {
                     System.out.println(CYAN + "Format example:" + RESET + " Ahmet, Ece, Ali");
@@ -1275,14 +1258,50 @@ public class TesterMenu {
             int count = 0;
             boolean backToAdvancedMenu = false;
 
-            // condition toplama
+            // ===== condition toplama =====
             while (true) {
+
                 System.out.println();
                 System.out.println(CYAN + "Selected filters so far: " + count + RESET);
 
+                // Eklenen filtreleri yukarıda göster
+                if (count > 0) {
+                    System.out.println(YELLOW + "Current filters:" + RESET);
+                    for (int i = 0; i < count; i++) {
+                        if (labels[i] == null || ops[i] == null || val1[i] == null) continue;
+
+                        String opText;
+                        switch (ops[i]) {
+                            case "starts":
+                                opText = "STARTS WITH";
+                                break;
+                            case "contains":
+                                opText = "CONTAINS";
+                                break;
+                            case "equals":
+                                opText = "EQUALS";
+                                break;
+                            case "date_eq":
+                                opText = "DATE";
+                                break;
+                            case "month":
+                                opText = "MONTH";
+                                break;
+                            case "year":
+                                opText = "YEAR";
+                                break;
+                            default:
+                                opText = ops[i].toUpperCase();
+                        }
+
+                        System.out.println("  [" + (i + 1) + "] " + labels[i] +
+                                " - " + opText + " : \"" + val1[i] + "\"");
+                    }
+                }
+
                 if (count >= MAX_CONDITIONS) {
-                    System.out.println(YELLOW + "You have reached the maximum number of conditions (" +
-                            MAX_CONDITIONS + ")." + RESET);
+                    System.out.println(YELLOW + "You have reached the maximum number of conditions ("
+                            + MAX_CONDITIONS + ")." + RESET);
                     break;
                 }
 
@@ -1315,7 +1334,6 @@ public class TesterMenu {
                         backToAdvancedMenu = true;
                         break;
                     } else {
-                        // son condition'ı sil
                         count--;
                         columns[count] = null;
                         labels[count]  = null;
@@ -1364,7 +1382,7 @@ public class TesterMenu {
                         label = "Birth Date";
                         break;
                     default:
-                        System.out.println(RED + "Invalid field option. Condition ignored." + RESET);
+                        System.out.println(RED + "Invalid field option. Please choose between 1 and 6." + RESET);
                         continue;
                 }
 
@@ -1372,6 +1390,7 @@ public class TesterMenu {
                 String value1 = null;
                 String value2 = null;
 
+                // ===== BIRTH DATE =====
                 if ("6".equals(fieldOption)) {
                     System.out.println();
                     System.out.println(CYAN + "Birth Date search mode:" + RESET);
@@ -1389,124 +1408,215 @@ public class TesterMenu {
 
                     if ("1".equals(dateMode)) {
                         op = "date_eq";
-                        System.out.print("Enter exact birth date YYYY-MM-DD (or '" + CMD_QUIT + "' to exit): ");
-                        value1 = readTrimmed();
-                        if (value1.equalsIgnoreCase(CMD_QUIT)) {
-                            System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
-                            waitForEnter();
-                            return;
-                        }
-                        if (!isValidExactDate(value1)) {
-                            System.out.println(RED + "Invalid date format or future date. Example: 1995-04-23." + RESET);
-                            continue;
+                        while (true) {
+                            System.out.print("Enter exact birth date YYYY-MM-DD (or '" + CMD_QUIT + "' to exit): ");
+                            value1 = readTrimmed();
+                            if (value1.equalsIgnoreCase(CMD_QUIT)) {
+                                System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
+                                waitForEnter();
+                                return;
+                            }
+                            if (value1.isEmpty()) {
+                                System.out.println(RED + "Date cannot be empty." + RESET);
+                                continue;
+                            }
+                            if (!isValidExactDate(value1)) {
+                                System.out.println(RED + "Invalid date format or future date. Example: 1995-04-23." + RESET);
+                                continue;
+                            }
+                            break;
                         }
                     } else if ("2".equals(dateMode)) {
-                        System.out.print("Enter month number 1-12 or name like november (or '" + CMD_QUIT
-                                + "' to exit): ");
-                        String monthInput = readTrimmed();
-                        if (monthInput.equalsIgnoreCase(CMD_QUIT)) {
-                            System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
-                            waitForEnter();
-                            return;
+                        while (true) {
+                            System.out.print("Enter month number 1-12 or name like november (or '" + CMD_QUIT
+                                    + "' to exit): ");
+                            String monthInput = readTrimmed();
+                            if (monthInput.equalsIgnoreCase(CMD_QUIT)) {
+                                System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
+                                waitForEnter();
+                                return;
+                            }
+                            if (monthInput.isEmpty()) {
+                                System.out.println(RED + "Month cannot be empty." + RESET);
+                                continue;
+                            }
+                            int monthNum = parseMonthToInt(monthInput);
+                            if (monthNum == -1) {
+                                System.out.println(RED
+                                        + "Invalid month. Please enter 1-12 or a valid month name like november." + RESET);
+                                continue;
+                            }
+                            op = "month";
+                            value1 = String.valueOf(monthNum);
+                            break;
                         }
-                        if (monthInput.isEmpty()) {
-                            System.out.println(RED + "Month cannot be empty. Condition ignored." + RESET);
-                            continue;
-                        }
-                        int monthNum = parseMonthToInt(monthInput);
-                        if (monthNum == -1) {
-                            System.out.println(RED
-                                    + "Invalid month. Please enter 1-12 or a valid month name like november." + RESET);
-                            continue;
-                        }
-                        op = "month";
-                        value1 = String.valueOf(monthNum);
                     } else if ("3".equals(dateMode)) {
-                        op = "year";
-                        System.out.print("Enter year for example 1999 (or '" + CMD_QUIT + "' to exit): ");
-                        value1 = readTrimmed();
-                        if (value1.equalsIgnoreCase(CMD_QUIT)) {
-                            System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
-                            waitForEnter();
-                            return;
-                        }
-                        if (!value1.matches("\\d{4}")) {
-                            System.out.println(RED + "Year must be four digits like 1999. Condition ignored." + RESET);
-                            continue;
-                        }
-                        int yearInt = Integer.parseInt(value1);
-                        int currentYear = LocalDate.now().getYear();
-                        if (yearInt > currentYear || yearInt < 1900) {
-                            System.out.println(RED + "Year must be between 1900 and " + currentYear + "." + RESET);
-                            continue;
+                        while (true) {
+                            System.out.print("Enter year for example 1999 (or '" + CMD_QUIT + "' to exit): ");
+                            value1 = readTrimmed();
+                            if (value1.equalsIgnoreCase(CMD_QUIT)) {
+                                System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
+                                waitForEnter();
+                                return;
+                            }
+                            if (value1.isEmpty()) {
+                                System.out.println(RED + "Year cannot be empty." + RESET);
+                                continue;
+                            }
+                            if (!value1.matches("\\d{4}")) {
+                                System.out.println(RED + "Year must be four digits like 1999." + RESET);
+                                continue;
+                            }
+                            int yearInt = Integer.parseInt(value1);
+                            int currentYear = LocalDate.now().getYear();
+                            if (yearInt > currentYear || yearInt < 1900) {
+                                System.out.println(RED + "Year must be between 1900 and " + currentYear + "." + RESET);
+                                continue;
+                            }
+                            op = "year";
+                            break;
                         }
                     } else {
-                        System.out.println(RED + "Invalid choice. Condition ignored." + RESET);
+                        System.out.println(RED + "Invalid choice for birth date mode." + RESET);
                         continue;
                     }
+
                 } else {
-                    String opTmp = selectOperator(label);
-                    if (opTmp == null) {
-                        System.out.println(RED + "Invalid operator. Please try again." + RESET);
-                        continue;
-                    }
-                    if (opTmp.equals("back")) {
-                        System.out.println(YELLOW + "Returning to field selection." + RESET);
-                        continue;
-                    }
-                    op = opTmp;
+                    // ===== diğer alanlar: operator + value loop =====
+                    boolean conditionReady = false;
+                    while (!conditionReady) {
+                        // operator seçimi
+                        while (true) {
+                            System.out.println();
+                            op = selectOperator(label);
+                            if (op == null) {
+                                System.out.println(RED + "Invalid operator. Please try again." + RESET);
+                                continue;
+                            }
+                            if (op.equals("back")) {
+                                // operator menüsünde back -> field seçimine geri dön
+                                columnName = null;
+                                label = null;
+                                break;
+                            }
+                            break;
+                        }
 
-                    String opLabel = getOperatorLabel(op);
-                    System.out.print("Enter search text for " + label + " (" + CYAN + opLabel + RESET
-                            + ", or '" + CMD_QUIT + "' to exit, '" + CMD_BACK + "' to go back): ");
-                    value1 = readTrimmed();
-                    if (value1.equalsIgnoreCase(CMD_QUIT)) {
-                        System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
-                        waitForEnter();
-                        return;
-                    }
-                    if (value1.equalsIgnoreCase(CMD_BACK)) {
-                        System.out.println(YELLOW + "Returning to field selection for this condition." + RESET);
-                        continue;
-                    }
-                    if (value1.isEmpty()) {
-                        System.out.println(RED + "Search text cannot be empty. Condition ignored." + RESET);
-                        continue;
+                        if (op == null || "back".equals(op)) {
+                            // field seçim döngüsüne geri dön
+                            break;
+                        }
+
+                        // value girişi
+                        while (true) {
+                            String opLabel = getOperatorLabel(op);
+                            System.out.print("Enter search text for " + label + " (" + CYAN + opLabel + RESET
+                                    + ", '" + CMD_BACK + "' to change operator, '" + CMD_QUIT + "' to exit): ");
+                            value1 = readTrimmed();
+
+                            if (value1.equalsIgnoreCase(CMD_QUIT)) {
+                                System.out.println(YELLOW + "Advanced custom search cancelled." + RESET);
+                                waitForEnter();
+                                return;
+                            }
+
+                            if (value1.equalsIgnoreCase(CMD_BACK)) {
+                                // tekrar operator seçimi
+                                op = null;
+                                value1 = null;
+                                break;
+                            }
+
+                            if (value1.isEmpty()) {
+                                System.out.println(RED + "Search text cannot be empty." + RESET);
+                                continue;
+                            }
+
+                            if (value1.length() > MAX_SEARCH_LEN) {
+                                System.out.println(RED + "Search text is too long. Please use a shorter value." + RESET);
+                                continue;
+                            }
+
+                            // VALIDASYONLAR
+                            if (columnName.equals("phone_primary")) {
+                                String normalized = normalizePhone(value1);
+                                if (normalized.isEmpty()) {
+                                    System.out.println(RED + "Phone number must contain digits." + RESET);
+                                    continue;
+                                }
+                                if ("equals".equals(op)) {
+                                    if (!isValidPhoneExact(value1)) {
+                                        System.out.println(RED + "Invalid phone format for equals." + RESET);
+                                        System.out.println(YELLOW + "Rules:" + RESET
+                                                + " after removing spaces and symbols it must contain exactly 10 digits. Example: 5321112233.");
+                                        continue;
+                                    }
+                                } else {
+                                    if (!normalized.matches("\\d+")) {
+                                        System.out.println(RED + "Phone number must contain digits only." + RESET);
+                                        continue;
+                                    }
+                                    if (normalized.length() > 10) {
+                                        System.out.println(RED
+                                                + "Phone number is too long. Maximum 10 digits after leading zero are used in this system."
+                                                + RESET);
+                                        continue;
+                                    }
+                                }
+                                value1 = normalized;
+                            } else if (columnName.equals("email")) {
+                                char bad = findForbiddenEmailChar(value1);
+                                if (bad != 0) {
+                                    System.out.println(RED + "You cannot use the character '" + bad + "' in email." + RESET);
+                                    System.out.println(YELLOW + "Please remove this character and try again." + RESET);
+                                    continue;
+                                }
+                                if (value1.contains(" ")) {
+                                    System.out.println(RED + "Email cannot contain spaces." + RESET);
+                                    continue;
+                                }
+                                if ("equals".equals(op)) {
+                                    if (!isValidEmailForEquals(value1)) {
+                                        System.out.println(RED + "Invalid email format for equals." + RESET);
+                                        System.out.println(YELLOW + "Rules:" + RESET
+                                                + " must look like user@gmail.com and domain must be gmail.com, outlook.com, hotmail.com or yahoo.com. No spaces.");
+                                        continue;
+                                    }
+                                }
+                            } else if (columnName.equals("first_name") || columnName.equals("last_name")) {
+                                if (!isValidName(value1)) {
+                                    System.out.println(RED + "Invalid name format." + RESET);
+                                    System.out.println(YELLOW + "Rules:" + RESET
+                                            + " only letters are allowed. No spaces, no digits, no symbols. Turkish letters are supported.");
+                                    continue;
+                                }
+                            } else if (columnName.equals("nickname")) {
+                                if (!isValidNickname(value1)) {
+                                    System.out.println(RED + "Invalid nickname format." + RESET);
+                                    System.out.println(YELLOW + "Rules:" + RESET
+                                            + " letters, digits, underscore and dot are allowed. No spaces.");
+                                    continue;
+                                }
+                            }
+
+                            // buraya geldiysek condition hazır
+                            conditionReady = true;
+                            break;
+                        }
+
+                        if (conditionReady) {
+                            break;
+                        }
+                        // eğer value kısmında BACK denip operator'a dönüldüyse, üst while tekrar döner
                     }
 
-                    if (columnName.equals("phone_primary")) {
-                        String normalized = normalizePhone(value1);
-                        if (normalized.isEmpty()) {
-                            System.out.println(RED + "Phone number must contain digits. Condition ignored." + RESET);
-                            continue;
-                        }
-                        value1 = normalized;
-                    } else if (columnName.equals("email")) {
-                        char bad = findForbiddenEmailChar(value1);
-                        if (bad != 0) {
-                            System.out.println(RED + "You cannot use the character '" + bad + "' in email." + RESET);
-                            System.out.println(YELLOW + "Please remove this character. Condition ignored." + RESET);
-                            continue;
-                        }
-                        if (value1.contains(" ")) {
-                            System.out.println(RED + "Email cannot contain spaces. Condition ignored." + RESET);
-                            continue;
-                        }
-                    } else if (columnName.equals("first_name") || columnName.equals("last_name")) {
-                        if (!isValidName(value1)) {
-                            System.out.println(RED + "Invalid name format. Condition ignored." + RESET);
-                            System.out.println(YELLOW + "Rules:" + RESET
-                                    + " only letters are allowed. No spaces, no digits, no symbols. Turkish letters are supported.");
-                            continue;
-                        }
-                    } else if (columnName.equals("nickname")) {
-                        if (!isValidNickname(value1)) {
-                            System.out.println(RED + "Invalid nickname format. Condition ignored." + RESET);
-                            continue;
-                        }
+                    if (op == null || "back".equals(op) || columnName == null) {
+                        // Bu field için condition tamamlanmadı, field seçimini tekrar iste
+                        continue;
                     }
                 }
 
+                // condition eklendi
                 columns[count] = columnName;
                 labels[count]  = label;
                 ops[count]     = op;
@@ -1516,7 +1626,7 @@ public class TesterMenu {
 
                 System.out.println(GREEN + "Filter added. Currently selected: " + count + RESET);
 
-                if (count >= 2 && count < MAX_CONDITIONS) {
+                if (count < MAX_CONDITIONS) {
                     System.out.print(YELLOW + "Do you want to add another condition (y or n): " + RESET);
                     String more = readTrimmed().toLowerCase();
                     if (more.equals("y") || more.equals("yes")) {
@@ -1527,6 +1637,9 @@ public class TesterMenu {
                         System.out.println(YELLOW + "Unknown answer, continuing with current conditions." + RESET);
                         break;
                     }
+                } else {
+                    // max condition'a ulaştı
+                    break;
                 }
             }
 
@@ -1535,6 +1648,7 @@ public class TesterMenu {
                 continue;
             }
 
+            // min 2 condition kontrolü
             if (count < 2) {
                 System.out.println();
                 System.out.println(
@@ -1557,6 +1671,7 @@ public class TesterMenu {
                 return;
             }
 
+            // ===== query inşa =====
             Connection con = getConnection();
             if (con == null) {
                 System.out.println(RED + "Database connection failed." + RESET);
@@ -1585,7 +1700,7 @@ public class TesterMenu {
                 }
             }
 
-            // Filtre özetini (kutular içinde) hazırla
+            // Filtre özetini hazırla
             StringBuilder filterSummary = new StringBuilder();
             for (int i = 0; i < count; i++) {
                 if (labels[i] == null || ops[i] == null || val1[i] == null) continue;
@@ -1761,7 +1876,7 @@ public class TesterMenu {
             case "december":
                 return 12;
             default:
-                return -1; // invalid month
+                return -1;
         }
     }
 
